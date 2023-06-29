@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "stdint.h": "c",
+        "stdint-gcc.h": "c",
+        "cstdint": "c",
+        "stdarg.h": "c",
+        "log_item.h": "c",
+        "unistd.h": "c",
+        "syscall.h": "c",
+        "time.h": "c",
+        "stdio.h": "c",
+        "log_misc.h": "c",
+        "queue.h": "c",
+        "pthread.h": "c",
+        "cdefs.h": "c"
+    }
+}

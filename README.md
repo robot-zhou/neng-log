@@ -47,14 +47,14 @@ cmake --build ./build -- -j4 VERBOSE=0
 1. 配置文件
 2. 代码初始化
 
-### 方式：配置文件
+### 方式一：配置文件
 1. 加载配置文件；配置文件的定义请看配置文件示例：neng-log.properties
 
 推荐此种方式，使用简单；仅仅调用函数加载配置文件即可。
 
 示例：./test/example-properties
 
-```
+```c
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -90,12 +90,12 @@ int main(int argc, char *argv[])
 }
 ```
 
-### 调用初始化函数
+### 方式二：调用初始化函数
 
 请看示例./test/main.c文件；
 日志输出示例：
 
-```
+```log
 root@dev2210:/var/log# cat test-1.log
 2023-06-27 14:03:30.562 dev2210 test 29826 Notice tid:29826 mod:10 tag:10 <main.c@main:78> :this is mod-20 tag-10 notice log.
 root@dev2210:/var/log# cat test-2.log

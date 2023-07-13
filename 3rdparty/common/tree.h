@@ -34,6 +34,19 @@
 
 #include <sys/cdefs.h>
 
+#ifndef __uintptr_t
+#include <stdint.h>
+#define __uintptr_t	uintptr_t
+#endif
+
+#ifndef NULL
+#define NULL 0
+#endif
+
+#ifdef __attribute_maybe_unused__
+#define __unused __attribute_maybe_unused__
+#endif
+
 /*
  * This file defines data structures for different types of trees:
  * splay trees and rank-balanced trees.

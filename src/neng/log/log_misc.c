@@ -8,10 +8,22 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#include <stdlib.h>
+#include <string.h>
+
+////////////////////////////////////////////////////////////////////
+// astr
+ARRAY_GENERATE(astr_, char, NULL, NULL, NULL, NULL);
+
 ////////////////////////////////////////////////////////////////////
 // NengLogAppender Bit Function
 inline int __neng_log_bits_set(uint8_t *bits, int n, int val)
 {
+    if (val < 0)
+    {
+        return -1;
+    }
+
     int idx = val / 8;
     uint8_t bit_mask[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
@@ -27,6 +39,11 @@ inline int __neng_log_bits_set(uint8_t *bits, int n, int val)
 
 inline int __neng_log_bits_get(uint8_t *bits, int n, int val)
 {
+    if (val < 0)
+    {
+        return -1;
+    }
+    
     int idx = val / 8;
     uint8_t bit_mask[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
@@ -148,4 +165,57 @@ void get_progname(char *buf, size_t n)
     }
 
     buf[m] = '\0';
+}
+
+////////////////////////////////////////////////////////////////////
+// log level function
+
+static const char *_LevelNames[] = {
+    "Emerg",
+    "Alert",
+    "Crit",
+    "Error",
+    "Warn",
+    "Notice",
+    "Info",
+    "Debug"};
+
+const char *NengLogLevel2Name(int level)
+{
+    if (level >= kNengLogMinLevel && level <= kNengLogMaxLevel)
+    {
+        return _LevelNames[level];
+    }
+
+    return "None";
+}
+
+static Code _Name2Level[] = {
+    {"Emerg", kNengLogEmerg},
+    {"Alert", kNengLogAlert},
+    {"Crit", kNengLogCrit},
+    {"Error", kNengLogError},
+    {"Err", kNengLogError},
+    {"Warn", kNengLogWarn},
+    {"Warning", kNengLogWarn},
+    {"Notice", kNengLogNotice},
+    {"Info", kNengLogInfo},
+    {"Debug", kNengLogDebug},
+    {NULL, -1},
+};
+
+int NengLogName2Level(const char *name)
+{
+    if (name != NULL && name[0] != '\0')
+    {
+        for (int n = 0; n < COUNT_OF(_Name2Level) && _Name2Level[n].name != NULL; n++)
+        {
+            if (strcasecmp(name, _Name2Level[n].name) == 0)
+            {
+                return _Name2Level[n].val;
+            }
+        }
+    }
+
+    return -1;
 }

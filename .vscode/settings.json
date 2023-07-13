@@ -12,6 +12,12 @@
         "log_misc.h": "c",
         "queue.h": "c",
         "pthread.h": "c",
-        "cdefs.h": "c"
+        "cdefs.h": "c",
+        "typeinfo": "cpp",
+        "typeindex": "c",
+        "log_syslog.h": "c",
+        "syslog.h": "c",
+        "errno-base.h": "c",
+        "properties.h": "c"
     }
 }

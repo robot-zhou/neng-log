@@ -11,19 +11,19 @@
 #include "log_misc.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-// Match Item
-typedef struct stNengLogSyslogMatchItem
+// Filter Item
+typedef struct stNengLogSyslogFilterItem
 {
-    TAILQ_ENTRY(stNengLogSyslogMatchItem)
+    TAILQ_ENTRY(stNengLogSyslogFilterItem)
     list_entry;
-    NengLogSyslogMatch sys_match;
-} NengLogSyslogMatchItem;
+    NengLogSyslogFilter sys_filter;
+} NengLogSyslogFilterItem;
 
-typedef TAILQ_HEAD(stNengLogSyslogMatchList, stNengLogSyslogMatchItem) NengLogSyslogMatchList;
+typedef TAILQ_HEAD(stNengLogSyslogFilterList, stNengLogSyslogFilterItem) NengLogSyslogFilterList;
 
 typedef struct stNengLogSyslogAppenderEx
 {
-    NengLogSyslogMatchList match_list;
+    NengLogSyslogFilterList filter_list;
 } NengLogSyslogAppenderEx;
 
 typedef struct stNengLogSyslogContext
@@ -35,29 +35,29 @@ typedef struct stNengLogSyslogContext
 #define __SYSLOG_APPENDER_EX(sa) (NengLogSyslogAppenderEx *)((char *)(sa) + sizeof(NengLogSyslogAppender))
 #define __SYSLOG_CONTEXT(sa) (NengLogSyslogContext *)((char *)(sa) + sizeof(NengLogSyslogAppender) + sizeof(NengLogSyslogAppenderEx))
 
-void NengLogSyslogAppenderAddMatch(NengLogSyslogAppender *sys_appender, const NengLogSyslogMatch *sys_match)
+void NengLogSyslogAppenderAddFilter(NengLogSyslogAppender *sys_appender, const NengLogSyslogFilter *sys_filter)
 {
     NengLogSyslogAppenderEx *sys_appender_ex = __SYSLOG_APPENDER_EX(sys_appender);
-    NengLogSyslogMatchItem *tmp_item = (NengLogSyslogMatchItem *)calloc(1, sizeof(NengLogSyslogMatchItem));
+    NengLogSyslogFilterItem *tmp_item = (NengLogSyslogFilterItem *)calloc(1, sizeof(NengLogSyslogFilterItem));
 
     if (tmp_item == NULL)
     {
-        CRIT_LOG("new syslog match fail: %s", strerror(errno));
+        CRIT_LOG("new syslog filter fail: %s", strerror(errno));
         return;
     }
 
-    tmp_item->sys_match = *sys_match;
-    TAILQ_INSERT_TAIL(&(sys_appender_ex->match_list), tmp_item, list_entry);
+    tmp_item->sys_filter = *sys_filter;
+    TAILQ_INSERT_TAIL(&(sys_appender_ex->filter_list), tmp_item, list_entry);
 }
 
-void NengLogSyslogAppenderClearMatch(NengLogSyslogAppender *sys_appender)
+void NengLogSyslogAppenderClearFilter(NengLogSyslogAppender *sys_appender)
 {
     NengLogSyslogAppenderEx *sys_appender_ex = __SYSLOG_APPENDER_EX(sys_appender);
 
-    while (TAILQ_EMPTY(&(sys_appender_ex->match_list)))
+    while (TAILQ_EMPTY(&(sys_appender_ex->filter_list)))
     {
-        NengLogSyslogMatchItem *item = TAILQ_FIRST(&(sys_appender_ex->match_list));
-        TAILQ_REMOVE(&(sys_appender_ex->match_list), item, list_entry);
+        NengLogSyslogFilterItem *item = TAILQ_FIRST(&(sys_appender_ex->filter_list));
+        TAILQ_REMOVE(&(sys_appender_ex->filter_list), item, list_entry);
         free(item);
     }
 }
@@ -103,52 +103,57 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
     }
     buf[header_len] = '\0';
 
-    if (TAILQ_FIRST(&(sys_appender_ex->match_list)) == NULL)
+    if (TAILQ_FIRST(&(sys_appender_ex->filter_list)) == NULL)
     {
         __syslog_write(item->level, "%s%s", buf, item->content);
         return;
     }
 
-    NengLogSyslogMatchItem *match_item = NULL;
+    int pri = item->level;
+    NengLogSyslogFilterItem *filter_item = NULL;
 
-    TAILQ_FOREACH(match_item, &(sys_appender_ex->match_list), list_entry)
+    TAILQ_FOREACH(filter_item, &(sys_appender_ex->filter_list), list_entry)
     {
-        NengLogSyslogMatch *sys_match = &(match_item->sys_match);
-        NengLogMatch *match = &(sys_match->match);
+        NengLogSyslogFilter *sys_filter = &(filter_item->sys_filter);
+        NengLogFilter *filter = &(sys_filter->filter);
 
-        if (NengLogMatchModBitIsEmpty(match) == 0)
+        if (NengLogFilterModBitIsEmpty(filter) == 0)
         {
-            if (item->mod <= 0 || NengLogMatchGetModBit(match, item->mod) != 1)
+            if (item->mod <= 0 || NengLogFilterGetModBit(filter, item->mod) != 1)
             {
                 continue;
             }
         }
 
-        if (NengLogMatchTagBitIsEmpty(match) == 0)
+        if (NengLogFilterTagBitIsEmpty(filter) == 0)
         {
-            if (item->tag <= 0 || NengLogMatchGetTagBit(match, item->tag) != 1)
+            if (item->tag <= 0 || NengLogFilterGetTagBit(filter, item->tag) != 1)
             {
                 continue;
             }
         }
 
-        if (NengLogMatchLevelBitIsEmpty(match) == 0)
+        if (NengLogFilterLevelBitIsEmpty(filter) == 0)
         {
-            if (NengLogMatchGetLevelBit(match, item->level) != 1)
+            if (NengLogFilterGetLevelBit(filter, item->level) != 1)
             {
                 continue;
             }
         }
 
-        int pri = item->level;
-
-        if (sys_match->facility != 0)
+        if (sys_filter->facility != 0)
         {
-            pri |= sys_match->facility & LOG_FACMASK;
+            pri |= sys_filter->facility & LOG_FACMASK;
+            break;
         }
-
-        __syslog_write(pri, "%s%s", buf, item->content);
     }
+
+    if (filter_item == NULL)
+    {
+        pri |= sys_appender->facility & LOG_FACMASK;
+    }
+
+    __syslog_write(pri, "%s%s", buf, item->content);
 }
 
 static void NengLogSyslogRelease(struct stNengLogAppender *appender)
@@ -162,7 +167,7 @@ static void NengLogSyslogRelease(struct stNengLogAppender *appender)
         sys_context->is_opened = 0;
     }
 
-    NengLogSyslogAppenderClearMatch(sys_appender);
+    NengLogSyslogAppenderClearFilter(sys_appender);
     free(sys_appender);
 }
 
@@ -199,7 +204,7 @@ NengLogSyslogAppender *NengLogCreateSyslogAppender(const char *ident, int option
 
     NengLogSyslogAppenderEx *sys_appender_ex = __SYSLOG_APPENDER_EX(sys_appender);
 
-    TAILQ_INIT(&(sys_appender_ex->match_list));
+    TAILQ_INIT(&(sys_appender_ex->filter_list));
 
     NengLogSyslogContext *sys_context = __SYSLOG_CONTEXT(sys_appender);
 

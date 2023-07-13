@@ -123,19 +123,47 @@ static void __rotatefile(NengLogFileAppender *file_appender)
     char tmp_filepath[NENG_LOG_FILEPATH_SIZE + 128] = {0};
     char tmp0_filepath[NENG_LOG_FILEPATH_SIZE + 128] = {0};
 
-    for (max_idx = 1; n < file_appender->max_loop; max_idx++)
+    if (file_appender->max_days > 0)
     {
-        snprintf(tmp_filepath, sizeof(tmp_filepath), "%s.%d.%s", base_name, max_idx, ext_name);
+        int before_time = get_systemtime_millisec() / 1000 - file_appender->max_days * 24 * 3600;
 
-        if (access(tmp_filepath, F_OK) != 0)
+        for (max_idx = 1;; max_idx++)
         {
-            break;
+            struct stat st = {0};
+            snprintf(tmp_filepath, sizeof(tmp_filepath), "%s.%d.%s", base_name, max_idx, ext_name);
+
+            if (0 != stat(tmp_filepath, &st))
+            {
+                if (errno == ENOENT)
+                {
+                    break;
+                }
+
+                continue;
+            }
+
+            if (st.st_mtime < before_time)
+            {
+                break;
+            }
         }
     }
-
-    if (max_idx > file_appender->max_loop)
+    else
     {
-        max_idx = file_appender->max_loop;
+        for (max_idx = 1; n < file_appender->max_loop; max_idx++)
+        {
+            snprintf(tmp_filepath, sizeof(tmp_filepath), "%s.%d.%s", base_name, max_idx, ext_name);
+
+            if (access(tmp_filepath, F_OK) != 0)
+            {
+                break;
+            }
+        }
+
+        if (max_idx > file_appender->max_loop)
+        {
+            max_idx = file_appender->max_loop;
+        }
     }
 
     for (; max_idx > 0; max_idx--)
@@ -251,7 +279,7 @@ NengLogFileAppender *NengLogCreateFileAppender(const char *filepath)
     file_appender->appender.close_fn = NengLogFileClose;
     file_appender->appender.release_fn = NengLogFileRelease;
 
-    if ( filepath != NULL)
+    if (filepath != NULL)
     {
         strncpy(file_appender->filepath, filepath, sizeof(file_appender->filepath) - 1);
     }

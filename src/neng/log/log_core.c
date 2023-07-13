@@ -13,6 +13,7 @@
 #include "log_def.h"
 #include "log_misc.h"
 #include "log_item.h"
+#include "log_appender.h"
 
 ////////////////////////////////////////////////////////////////////
 // 日志通用头输出函数
@@ -213,135 +214,6 @@ int NengLogWriteHeader(NengLogAppenderFlags *flags, const NengLogItem *item, cha
     return len;
 }
 
-////////////////////////////////////////////////////////////////////
-// LogAppender Function
-typedef struct stAppenderListItem
-{
-    LIST_ENTRY(stAppenderListItem)
-    entry;
-    pthread_mutex_t mtx;
-    NengLogAppender *appender;
-} AppenderListItem;
-
-typedef LIST_HEAD(stAppenderList, stAppenderListItem) AppenderList;
-
-static pthread_rwlock_t _appener_list_rwlock = PTHREAD_RWLOCK_INITIALIZER;
-static AppenderList _appender_list = LIST_HEAD_INITIALIZER(stAppenderList);
-static AppenderList _appender_sync_list = LIST_HEAD_INITIALIZER(stAppenderList);
-
-int NengLogAddAppender(NengLogAppender *appender)
-{
-    pthread_rwlock_wrlock(&_appener_list_rwlock);
-
-    AppenderListItem *list_item = NULL;
-
-    LIST_FOREACH(list_item, &_appender_sync_list, entry)
-    {
-        if (list_item->appender == appender)
-        {
-            errno = EEXIST;
-            pthread_rwlock_unlock(&_appener_list_rwlock);
-            return -1;
-        }
-    }
-
-    LIST_FOREACH(list_item, &_appender_list, entry)
-    {
-        if (list_item->appender == appender)
-        {
-            errno = EEXIST;
-            pthread_rwlock_unlock(&_appener_list_rwlock);
-            return -1;
-        }
-    }
-
-    list_item = calloc(1, sizeof(AppenderListItem));
-    if (list_item == NULL)
-    {
-        CRIT_LOG("alloc appender list fail: %s", strerror(errno));
-        pthread_rwlock_unlock(&_appener_list_rwlock);
-        return -1;
-    }
-
-    pthread_mutex_init(&(list_item->mtx), NULL);
-    list_item->appender = appender;
-
-    if (appender->flags.disable_async)
-    {
-        LIST_INSERT_HEAD(&_appender_sync_list, list_item, entry);
-    }
-    else
-    {
-        LIST_INSERT_HEAD(&_appender_list, list_item, entry);
-    }
-
-    pthread_rwlock_unlock(&_appener_list_rwlock);
-
-    return 0;
-}
-
-int NengLogRemoveAppender(NengLogAppender *appender)
-{
-    pthread_rwlock_wrlock(&_appener_list_rwlock);
-
-    AppenderListItem *list_item = NULL;
-
-    LIST_FOREACH(list_item, &_appender_sync_list, entry)
-    {
-        if (list_item->appender == appender)
-        {
-            break;
-        }
-    }
-
-    if (list_item == NULL)
-    {
-        LIST_FOREACH(list_item, &_appender_list, entry)
-        {
-            if (list_item->appender == appender)
-            {
-                break;
-            }
-        }
-    }
-
-    if (list_item == NULL)
-    {
-        errno = ENOENT;
-        pthread_rwlock_unlock(&_appener_list_rwlock);
-        return -1;
-    }
-
-    LIST_REMOVE(list_item, entry);
-    pthread_mutex_destroy(&(list_item->mtx));
-    if (list_item->appender->release_fn != NULL)
-    {
-        list_item->appender->release_fn(list_item->appender);
-    }
-    free(list_item);
-
-    pthread_rwlock_unlock(&_appener_list_rwlock);
-    return 0;
-}
-
-void NengLogClearAppender(void)
-{
-    pthread_rwlock_wrlock(&_appener_list_rwlock);
-    while (LIST_FIRST(&_appender_list) != NULL)
-    {
-        AppenderListItem *list_item = LIST_FIRST(&_appender_list);
-
-        LIST_REMOVE(list_item, entry);
-        pthread_mutex_destroy(&(list_item->mtx));
-        if (list_item->appender->release_fn != NULL)
-        {
-            list_item->appender->release_fn(list_item->appender);
-        }
-        free(list_item);
-    }
-    pthread_rwlock_unlock(&_appener_list_rwlock);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // 日志输出
 static int _enable_async = 0;
@@ -371,34 +243,11 @@ static void NengLogAppenderListWrite(AppenderList *appender_list, NengLogItem *i
 
         NengLogAppender *appender = list_item->appender;
 
-        if (NengLogMatchModBitIsEmpty(&(appender->match)) == 0)
+        if (NengLogAppenderHitLogItem(appender, item) == 1)
         {
-            if (item->mod <= 0 || NengLogMatchGetModBit(&(appender->match), item->mod) != 1)
-            {
-                pthread_mutex_unlock(&(list_item->mtx));
-                continue;
-            }
+            appender->writer_fn(appender, item);
         }
 
-        if (NengLogMatchTagBitIsEmpty(&(appender->match)) == 0)
-        {
-            if (item->tag <= 0 || NengLogMatchGetTagBit(&(appender->match), item->tag) != 1)
-            {
-                pthread_mutex_unlock(&(list_item->mtx));
-                continue;
-            }
-        }
-
-        if (NengLogMatchLevelBitIsEmpty(&(appender->match)) == 0)
-        {
-            if (NengLogMatchGetLevelBit(&(appender->match), item->level) != 1)
-            {
-                pthread_mutex_unlock(&(list_item->mtx));
-                continue;
-            }
-        }
-
-        appender->writer_fn(appender, item);
         pthread_mutex_unlock(&(list_item->mtx));
     }
 }
@@ -527,95 +376,68 @@ static void _install_onexit(void)
 ////////////////////////////////////////////////////////////////////
 // NengLog Function
 #define NENG_LOG_MODLEVEL_BITMASK 0x00001000
-static int _log_level = kNengLogInfo;
 static int _log_mod_level[NENG_LOG_MOD_SIZE] = {0};
 
 void NengLogSetLevel(int level, int mod)
 {
-    if (mod <= 0)
+    if (mod < 0 || mod >= NENG_LOG_MOD_SIZE)
     {
-        _log_level = level;
+        return;
     }
 
-    if (mod >= NENG_LOG_MOD_MIN && mod <= NENG_LOG_MOD_MAX)
+    if (level < kNengLogMinLevel || level > kNengLogMaxLevel)
     {
-        _log_mod_level[mod - NENG_LOG_MOD_MIN] = level | NENG_LOG_MODLEVEL_BITMASK;
+        return;
     }
+
+    _log_mod_level[mod] = level | NENG_LOG_MODLEVEL_BITMASK;
 }
 
 int NengLogGetLevel(int mod)
 {
-    if (mod <= 0)
+    if (mod < 0 || mod >= NENG_LOG_MOD_SIZE)
     {
-        return _log_level;
+        return -1;
     }
 
-    if (mod >= NENG_LOG_MOD_MIN && mod <= NENG_LOG_MOD_MAX)
+    int level = _log_mod_level[mod];
+    if (level & NENG_LOG_MODLEVEL_BITMASK)
     {
-        int level = _log_mod_level[mod - NENG_LOG_MOD_MIN];
-
-        if (level & NENG_LOG_MODLEVEL_BITMASK)
-        {
-            return level ^ NENG_LOG_MODLEVEL_BITMASK;
-        }
+        return level ^ NENG_LOG_MODLEVEL_BITMASK;
     }
 
-    return -1;
+    return (mod == 0) ? kNengLogInfo : -1;
 }
 
-static const char *_LevelNames[] = {
-    "Emerg",
-    "Alert",
-    "Crit",
-    "Error",
-    "Warn",
-    "Notice",
-    "Info",
-    "Debug"};
-
-const char *NengLogLevel2Name(int level)
+void NengLogClearLevel(int mod)
 {
-    if (level >= kNengLogMinLevel && level <= kNengLogMaxLevel)
+    if (mod < 0 || mod >= NENG_LOG_MOD_SIZE)
     {
-        return _LevelNames[level];
+        memset(_log_mod_level, 0, sizeof(_log_mod_level));
+        return;
     }
 
-    return "None";
-}
-
-int NengLogName2Level(const char *name)
-{
-    for (int i = 0; i < sizeof(_LevelNames) / sizeof(_LevelNames[0]); i++)
-    {
-        if (strcasecmp(name, _LevelNames[i]) == 0)
-        {
-            return i;
-        }
-    }
-
-    return -1;
+    _log_mod_level[mod] = 0;
 }
 
 void NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap)
 {
     _install_onexit();
 
+    int  mod_level = NengLogGetLevel(mod);
     uint8_t log_flags = (uint8_t)(((uint32_t)level & 0xff00) >> 8);
+    
     level = level & 0x00ff;
-
-    if (level > _log_level || level < 0)
+    if (mod_level >= 0)
     {
-        return;
-    }
-
-    if (mod > 0)
-    {
-        int mod_level = NengLogGetLevel(mod);
-
-        if (mod_level >= 0 && level > mod_level)
+        if (level > mod_level)
         {
             return;
         }
+    }
+    else if (mod != 0 && level > NengLogGetLevel(0))
+    {
+        return;
     }
 
     int size = vsnprintf(NULL, 0, fmt, ap);

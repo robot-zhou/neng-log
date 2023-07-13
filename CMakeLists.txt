@@ -39,14 +39,26 @@ set_target_properties(neng-log PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_CONF_DIR} 
 )
 
-# test target
-set(TEST_SRC_DIR ${TEST_DIR})
-file(GLOB_RECURSE TEST_SRC_FILES ${TEST_SRC_DIR}/*.cpp ${TEST_SRC_DIR}/*.c)
-add_executable(test ${TEST_SRC_FILES})
-target_link_libraries(test neng-log pthread)
-set_target_properties(test PROPERTIES 
+# test example target
+set(TEST_EXAMPLE_SRC_DIR ${TEST_DIR}/example)
+file(GLOB_RECURSE TEST_EXAMPLE_SRC_FILES ${TEST_EXAMPLE_SRC_DIR}/*.cpp ${TEST_EXAMPLE_SRC_DIR}/*.c)
+add_executable(example ${TEST_EXAMPLE_SRC_FILES})
+target_link_libraries(example neng-log pthread)
+set_target_properties(example PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR} 
     ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_LIB_DIR} 
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_CONF_DIR} 
 )
-add_dependencies(test neng-log)
+add_dependencies(example neng-log)
+
+# test example-properties target
+set(TEST_EXAMPLE_PROPERTIES_SRC_DIR ${TEST_DIR}/example-properties)
+file(GLOB_RECURSE TEST_EXAMPLE_PROPERTIES_SRC_FILES ${TEST_EXAMPLE_PROPERTIES_SRC_DIR}/*.cpp ${TEST_EXAMPLE_PROPERTIES_SRC_DIR}/*.c)
+add_executable(example-properties ${TEST_EXAMPLE_PROPERTIES_SRC_FILES})
+target_link_libraries(example-properties neng-log pthread)
+set_target_properties(example-properties PROPERTIES 
+    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR} 
+    ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_LIB_DIR} 
+    LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_CONF_DIR} 
+)
+add_dependencies(example-properties neng-log)

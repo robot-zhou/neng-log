@@ -3,10 +3,20 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <common/array.h>
 
 #include "log_def.h"
 
 __BEGIN_DECLS
+
+typedef struct stCode
+{
+    const char *name;
+    int val;
+} Code;
+
+typedef ARRAY_HEAD(astr_, char) astr_t;
+ARRAY_PROTOTYPE(astr_, char, NULL, NULL, NULL, NULL);
 
 // system function
 int gettid(void);

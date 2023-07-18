@@ -20,7 +20,7 @@ __BEGIN_DECLS
 // 日志输出 相关接口
 
 /**
- * @brief 模块(mod)和标签(tag)有数字表示， 默认有最大值和最小值；
+ * @brief 模块(mod)和标签(tag)有数字表示，默认从0开始到SIZE， 不包含SIZE
  *
  */
 #define NENG_LOG_MOD_SIZE 256
@@ -102,7 +102,7 @@ int NengLogName2Level(const char *name);
  * @brief 日志输出强制标志，用法: 与级别位或运算, 如：level | NENG_LOG_FLAG_SYNC
  *
  */
-#define NENG_LOG_FLAG_SYNC 0x0100
+#define NENG_LOG_FLAG_SYNC (0x01 << 8)
 
 /**
  * @brief 输出日志，like vsprintf， 一般不直接调用此函数，而是使用NENG_LOGVXXXX宏输出日志；
@@ -289,7 +289,7 @@ typedef struct stNengLogAppenderFlags
 } NengLogAppenderFlags;
 
 /**
- * @brief 通用的日志头生产函数
+ * @brief 通用的日志头生产函数, 将日志输出缓冲区，便于appender使用。
  *
  * @param flags 日志头输出标志
  * @param item  neng-log内部日志记录
@@ -303,20 +303,20 @@ int NengLogWriteHeader(NengLogAppenderFlags *flags, const NengLogItem *item, cha
 // Log Filter 相关接口
 
 /**
- * @brief   定义日志过滤器，filter定义了什么mod，tag，level的日志会被匹配到， 会用在Appender中，
+ * @brief   定义日志过滤器，filter定义了什么mod，tag，level的日志会被匹配到；用在Appender中，
  *          定义有匹配到的日志会输出到appender
  *
  */
 typedef struct stNengLogFilter
 {
-    uint8_t mod_bits[(NENG_LOG_MOD_SIZE + 7) / 8]; // mod 掩码位， 1个bit对应一个mod序号， 全0表示所有mod
-    uint8_t tag_bits[(NENG_LOG_TAG_SIZE + 7) / 8]; // tag 掩码位， 1个bit对应一个tag序号， 全0表示所有tag
-    uint8_t level_bits[1];                         // level 掩码位， 1个bit对应一个level序号， 全0表示所有level
+    uint8_t mod_bits[(NENG_LOG_MOD_SIZE + 7) / 8]; // mod 掩码位， 1个bit对应一个mod序号， 全0表示匹配所有mod
+    uint8_t tag_bits[(NENG_LOG_TAG_SIZE + 7) / 8]; // tag 掩码位， 1个bit对应一个tag序号， 全0表示匹配所有tag
+    uint8_t level_bits[1];                         // level 掩码位， 1个bit对应一个level序号， 全0表示匹配所有level
 } NengLogFilter;
 
 /**
  * @brief   设定、获取、判定是否空、清空日志过滤器的模块Mod；
- *          可以设置多个Mod； 如不设置，则所有Mod的日志都会匹配到此Filter；
+ *          可以设置多个Mod; 如不设置，则所有Mod的日志都会匹配到此Filter；
  *
  * @param filter    日志过滤器，
  * @param mod       模块Id
@@ -386,19 +386,19 @@ int NengLogFilterIsEmpty(NengLogFilter *filter);
 struct stNengLogAppender;
 
 /**
- * @brief 日志appender日志输出函数类型定义，有neng-log框架调用
+ * @brief 日志appender日志输出函数类型定义，由neng-log框架调用
  *
  */
 typedef void (*NengLogItemWriterFunc)(struct stNengLogAppender *appender, const NengLogItem *item);
 
 /**
- * @brief 日志appender清理函数类型定义，有neng-log框架在退出时调用
+ * @brief 日志appender清理函数类型定义，由neng-log框架在退出时或者移除Appender时调用
  *
  */
 typedef void (*NengLogAppenderReleaseFunc)(struct stNengLogAppender *appender);
 
 /**
- * @brief 日志appender关闭接口，目的：有项目使用logrotate备份日志，neng-log框架调用此函数重新打开日志；
+ * @brief 日志appender关闭接口，有项目使用logrotate备份日志，neng-log框架调用此函数重新打开日志；
  *
  */
 typedef void (*NengLogAppenderCloseFunc)(struct stNengLogAppender *appender);
@@ -411,7 +411,7 @@ typedef struct stNengLogAppender
 {
     char name[16];                         // appender 名称，
     NengLogItemWriterFunc writer_fn;       // 日志输出函数
-    NengLogAppenderReleaseFunc release_fn; // appender释放函数
+    NengLogAppenderReleaseFunc release_fn; // appender释放函数, 
     NengLogAppenderCloseFunc close_fn;     // appender关闭函数
     NengLogAppenderFlags flags;            // appender日志头输出选项
     void *extend;                          // neng-log框架使用，初始化保持为空

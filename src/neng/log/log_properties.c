@@ -63,17 +63,20 @@ int NengLogLoadProperties(const char *filepath)
             {
                 snprintf(name, sizeof(name), "log.appender.%s", item);
                 appender = NengLogLoadFileProperties(name, &root);
-                NengLogAddAppender(appender);
             }
             else if (strcasecmp(type, "syslog") == 0)
             {
                 snprintf(name, sizeof(name), "log.appender.%s", item);
                 appender = NengLogLoadSyslogProperties(name, &root);
-                NengLogAddAppender(appender);
             }
             else
             {
                 continue;
+            }
+
+            if (appender != NULL)
+            {
+                NengLogAddAppender(appender);
             }
         } // for()
 

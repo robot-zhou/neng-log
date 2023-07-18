@@ -319,6 +319,7 @@ int _properties_read_file(const char *filepath, PropertiesHead *root)
     return ret;
 }
 
+static char _null_str[] = "\0";
 char *_properties_get(PropertiesHead *root, const char *name)
 {
     char namebuf[512] = {0};
@@ -327,7 +328,7 @@ char *_properties_get(PropertiesHead *root, const char *name)
 
     strncpy(namebuf, name, sizeof(namebuf) - 1);
     find = RB_FIND(stPropertiesHead, root, &var);
-    return (find != NULL) ? find->property : NULL;
+    return (find != NULL) ? (find->property ? find->property : _null_str) : NULL;
 }
 
 int _properties_unittype_int(int val, char *endptr, int unit_type)

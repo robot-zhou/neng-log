@@ -28,7 +28,7 @@ NengLogAppender *NengLogLoadFileProperties(const char *prefix, PropertiesHead *r
     snprintf(name, sizeof(name), "%s.max_days", prefix);
     file_appender->max_days = _properties_get_defint(root, name, 0, 0);
     snprintf(name, sizeof(name), "%s.max_loop", prefix);
-    file_appender->max_days = _properties_get_defint(root, name, 0, 0);
+    file_appender->max_loop = _properties_get_defint(root, name, 0, 0);
     snprintf(name, sizeof(name), "%s.daily", prefix);
     file_appender->daily = _properties_get_defbool(root, name, 0);
 

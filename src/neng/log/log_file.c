@@ -150,7 +150,7 @@ static void __rotatefile(NengLogFileAppender *file_appender)
     }
     else
     {
-        for (max_idx = 1; n < file_appender->max_loop; max_idx++)
+        for (max_idx = 1; max_idx <= file_appender->max_loop; max_idx++)
         {
             snprintf(tmp_filepath, sizeof(tmp_filepath), "%s.%d.%s", base_name, max_idx, ext_name);
 
@@ -196,7 +196,7 @@ static void NengLogFileWrite(struct stNengLogAppender *appender, const NengLogIt
         return;
     }
 
-    if (file_context->is_rugar && file_context->is_std != 0 && file_context->file_size > 0 &&
+    if (file_context->is_rugar && file_context->is_std == 0 && file_context->is_tty == 0 && file_context->file_size > 0 &&
         (file_appender->daily == 1 || file_appender->max_size > 0))
     {
         int rotate = 0;

@@ -232,7 +232,7 @@ static void NengLogAppenderListWrite(AppenderList *appender_list, NengLogItem *i
 {
     AppenderListItem *list_item = NULL;
 
-    LIST_FOREACH(list_item, appender_list, entry)
+    TAILQ_FOREACH(list_item, appender_list, entry)
     {
         if (list_item->appender == NULL)
         {
@@ -332,7 +332,7 @@ static void NengLogWrite(NengLogItem *item)
     }
     else
     {
-        if (LIST_FIRST(&_appender_list) != NULL)
+        if (TAILQ_FIRST(&_appender_list) != NULL)
         {
             async = 1;
         }
@@ -498,7 +498,7 @@ void NengLogClose(void)
 
     pthread_rwlock_rdlock(&_appener_list_rwlock);
 
-    LIST_FOREACH(appender_item, &(_appender_list), entry)
+    TAILQ_FOREACH(appender_item, &(_appender_list), entry)
     {
         pthread_mutex_lock(&(appender_item->mtx));
         if (appender_item->appender->close_fn != NULL)
@@ -508,7 +508,7 @@ void NengLogClose(void)
         pthread_mutex_unlock(&(appender_item->mtx));
     }
 
-    LIST_FOREACH(appender_item, &(_appender_sync_list), entry)
+    TAILQ_FOREACH(appender_item, &(_appender_sync_list), entry)
     {
         pthread_mutex_lock(&(appender_item->mtx));
         if (appender_item->appender->close_fn != NULL)

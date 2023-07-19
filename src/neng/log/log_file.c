@@ -18,7 +18,7 @@ typedef struct stNengLogFileContext
 {
     int fd;
     int64_t last_mtime;
-    uint16_t file_size;
+    uint64_t file_size;
     uint16_t is_tty : 1;
     uint16_t is_rugar : 1;
     uint16_t is_std : 1;
@@ -204,7 +204,7 @@ static void NengLogFileWrite(struct stNengLogAppender *appender, const NengLogIt
         int64_t nowtm = get_systemtime_millisec() / 1000;
 
         if (file_appender->daily == 1 &&
-            ((nowtm + __timezone) / day_sec_count != (file_context->last_mtime + __timezone) / day_sec_count))
+            ((nowtm - __timezone) / day_sec_count != (file_context->last_mtime - __timezone) / day_sec_count))
         {
             rotate = 1;
         }
@@ -246,6 +246,7 @@ static void NengLogFileWrite(struct stNengLogAppender *appender, const NengLogIt
     __WRITE_WRAP(file_appender, file_context, buf, header_len);
     __WRITE_WRAP(file_appender, file_context, item->content, strlen(item->content));
     __WRITE_WRAP(file_appender, file_context, "\n", 1);
+    file_context->last_mtime = get_systemtime_millisec() / 1000;
 }
 
 static void NengLogFileClose(struct stNengLogAppender *appender)

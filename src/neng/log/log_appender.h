@@ -24,13 +24,13 @@ typedef struct stAppenderExtend
 
 typedef struct stAppenderListItem
 {
-    LIST_ENTRY(stAppenderListItem)
+    TAILQ_ENTRY(stAppenderListItem)
     entry;
     pthread_mutex_t mtx;
     NengLogAppender *appender;
 } AppenderListItem;
 
-typedef LIST_HEAD(stAppenderList, stAppenderListItem) AppenderList;
+typedef TAILQ_HEAD(stAppenderList, stAppenderListItem) AppenderList;
 
 extern pthread_rwlock_t _appener_list_rwlock;
 extern AppenderList _appender_list;

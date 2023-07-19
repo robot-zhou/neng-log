@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     // 输出日志
     while (_running)
     {
-        sleep(1);
+        usleep(100*1000);
 
         NENG_LOGMT_NOTICE(10, 20, "this is mod-10 tag-20 notice log.");
         NENG_LOGMT_ERROR(10, 25, "this is mod-10 tag-25 error log.");

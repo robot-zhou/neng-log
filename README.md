@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 
 ### 方式二：调用初始化函数
 
-请看示例./test/main.c文件；
+请看示例./test/example/main.c文件；
 日志输出示例：
 
 ```log

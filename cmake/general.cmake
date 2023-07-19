@@ -3,6 +3,16 @@ if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE )
 endif(NOT CMAKE_BUILD_TYPE)
 
+# check compile type
+message("compiler: " ${CMAKE_CXX_COMPILER_ID})
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+set(CLANG 1)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+set(GNU 1)
+else()
+message(FATAL_ERROR "not support compiler")
+endif()
+
 # check os/machineos/machine
 include(TestBigEndian)
 test_big_endian(IS_BIG_ENDIAN)
@@ -36,18 +46,18 @@ endif()
 
 # os type
 if(OS_LINUX)
-add_compile_definitions(__LINUX__)
+add_compile_definitions(LINUX __LINUX__)
 endif()
 if(OS_DARWIN)
-add_compile_definitions(__DARWIN__)
+add_compile_definitions(DARWIN __DARWIN__)
 endif()
 
 # cpu type
 if(CPU_x86_64)
-add_compile_definitions(__x86_64__)
+add_compile_definitions(__x86_64__ __amd64__)
 endif()
 if(CPU_ARM64)
-add_compile_definitions(__ARM64__)
+add_compile_definitions(__arm64__)
 endif()
 
 # byte endian

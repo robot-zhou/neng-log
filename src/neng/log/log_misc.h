@@ -21,6 +21,7 @@ ARRAY_PROTOTYPE(astr_, char, NULL, NULL, NULL, NULL);
 // system function
 int gettid(void);
 int64_t get_systemtime_millisec(void);
+long get_timezone(void);
 void get_hostname(char *buf, size_t n);
 void get_progname(char *buf, size_t n);
 

@@ -349,6 +349,7 @@ static void NengLogWrite(NengLogItem *item)
 }
 
 ////////////////////////////////////////////////////////////////////
+#ifdef __LINUX__
 static pthread_mutex_t _install_onexit_mtx = PTHREAD_MUTEX_INITIALIZER;
 static int _onexit_installed = 0;
 
@@ -372,6 +373,7 @@ static void _install_onexit(void)
     }
     pthread_mutex_unlock(&_install_onexit_mtx);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////
 // NengLog Function
@@ -422,7 +424,9 @@ void NengLogClearLevel(int mod)
 
 void NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap)
 {
+#ifdef __LINUX__
     _install_onexit();
+#endif
 
     int  mod_level = NengLogGetLevel(mod);
     uint8_t log_flags = (uint8_t)(((uint32_t)level & 0xff00) >> 8);

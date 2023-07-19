@@ -4,7 +4,6 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <syscall.h>
 #include <pthread.h>
 #include <sys/time.h>
 
@@ -43,7 +42,7 @@ inline int __neng_log_bits_get(uint8_t *bits, int n, int val)
     {
         return -1;
     }
-    
+
     int idx = val / 8;
     uint8_t bit_mask[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
@@ -79,13 +78,30 @@ inline void __neng_log_bits_clear(uint8_t *bits, int n)
 ////////////////////////////////////////////////////////////////////
 // System Function
 
-#if defined(__LINUX__) || defined(__DARWIN__)
+#if defined(__LINUX__)
 
 #include <sys/syscall.h>
 
 int gettid(void)
 {
     return syscall(SYS_gettid);
+}
+
+#elif defined(__DARWIN__)
+#include <pthread.h>
+
+int gettid(void)
+{
+    uint64_t id = 0;
+    pthread_threadid_np(NULL, &id);
+    return (int)id;
+}
+
+#else
+
+int gettid(void)
+{
+    return 0;
 }
 
 #endif //__LINUX__
@@ -97,6 +113,26 @@ int64_t get_systemtime_millisec(void)
     gettimeofday(&tv, NULL);
 
     return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+long get_timezone(void)
+{
+    static int64_t offset = -1;
+
+    if (offset != -1)
+    {
+        return offset;
+    }
+
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    if (tm == NULL)
+    {
+        return 0;
+    }
+
+    offset = tm->tm_gmtoff;
+    return offset;
 }
 
 static pthread_mutex_t _hostname_mtx = PTHREAD_MUTEX_INITIALIZER;

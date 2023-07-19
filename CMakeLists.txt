@@ -18,7 +18,10 @@ set(OUTPUT_CONF_DIR "${OUTPUT_DIR}/conf")
 include(${CMAKE_DIR}/general.cmake)
 
 # common compile options
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_COMPILE_C_FLAGS} -Wno-nonnull")
+if(${GNU})
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_COMPILE_C_FLAGS} -Wno-nonnull -Wno-format-overflow")
+endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_COMPILE_CXX_FLAGS}")
 
 # common include directory

@@ -205,7 +205,7 @@ static void NengLogFileWrite(struct stNengLogAppender *appender, const NengLogIt
         int64_t nowtm = get_systemtime_millisec() / 1000;
 
         if (file_appender->daily == 1 &&
-            ((nowtm - timezone) / day_sec_count != (file_context->last_mtime - timezone) / day_sec_count))
+            ((nowtm + timezone) / day_sec_count != (file_context->last_mtime + timezone) / day_sec_count))
         {
             rotate = 1;
         }

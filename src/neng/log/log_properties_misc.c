@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "log_filter.h"
+
 ARRAY_GENERATE(stIntArray, int, NULL, NULL, NULL, NULL);
 
 int _string2ints(const char *s, IntArray *int_head)

@@ -1,5 +1,6 @@
 #include <neng/log/log.h>
 
+#include "log_filter.h"
 #include "log_misc.h"
 
 ////////////////////////////////////////////////////////////////////
@@ -82,4 +83,33 @@ int NengLogFilterIsEmpty(NengLogFilter *filter)
     }
 
     return 0;
+}
+
+int NengLogFilterHit(NengLogFilter *filter, int mod, int tag, int level)
+{
+    if (NengLogFilterModBitIsEmpty(filter) == 0)
+    {
+        if (mod < 0 || NengLogFilterGetModBit(filter, mod) != 1)
+        {
+            return 0;
+        }
+    }
+
+    if (NengLogFilterTagBitIsEmpty(filter) == 0)
+    {
+        if (tag < 0 || NengLogFilterGetTagBit(filter, tag) != 1)
+        {
+            return 0;
+        }
+    }
+
+    if (NengLogFilterLevelBitIsEmpty(filter) == 0)
+    {
+        if (level < 0 || NengLogFilterGetLevelBit(filter, level) != 1)
+        {
+            return 0;
+        }
+    }
+
+    return 1;
 }

@@ -32,8 +32,6 @@
 #ifndef	_SYS_TREE_H_
 #define	_SYS_TREE_H_
 
-#include <sys/cdefs.h>
-
 #ifndef __uintptr_t
 #include <stdint.h>
 #define __uintptr_t	uintptr_t
@@ -43,8 +41,12 @@
 #define NULL 0
 #endif
 
-#ifdef __attribute_maybe_unused__
-#define __unused __attribute_maybe_unused__
+#ifndef __unused
+#ifdef __GNUC__
+#define __unused __attribute__((__unused__))
+#else
+#define __unused 
+#endif
 #endif
 
 /*

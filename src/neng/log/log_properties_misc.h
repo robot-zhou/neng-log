@@ -1,13 +1,14 @@
 #ifndef __NENG_LOG_PROPERTIES_MISC_H__
 #define __NENG_LOG_PROPERTIES_MISC_H__
 
-#include <sys/cdefs.h>
 #include <neng/log/log.h>
 #include <common/array.h>
 
 #include "properties.h"
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef ARRAY_HEAD(stIntArray, int) IntArray;
 ARRAY_PROTOTYPE(stIntArray, int, NULL, NULL, NULL, NULL);
@@ -20,6 +21,8 @@ int _LoadAppenderFlagsProperties(const char *prefix, PropertiesHead *root, NengL
 int _LoadAppenderFilterProperties(const char *prefix, PropertiesHead *root, NengLogAppender *appender);
 int _LoadAppenderProperties(const char *prefix, PropertiesHead *root, NengLogAppender *appender);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

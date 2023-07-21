@@ -6,7 +6,9 @@
 
 #include "log_def.h"
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct stFilterItem
 {
@@ -38,6 +40,8 @@ extern AppenderList _appender_sync_list;
 
 int NengLogAppenderHitLogItem(NengLogAppender *appender, NengLogItem *item);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

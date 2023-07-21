@@ -1,7 +1,9 @@
 #ifndef __NENG_LOG_PROPERTIES_H__
 #define __NENG_LOG_PROPERTIES_H__
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief 加载properties格式的配置文件；配置例子：neng-log.properties
@@ -11,6 +13,8 @@ __BEGIN_DECLS
  */
 int NengLogLoadProperties(const char *filepath);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

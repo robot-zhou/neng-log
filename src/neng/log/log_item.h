@@ -6,7 +6,9 @@
 
 #include "log_def.h"
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef union unNengLogItemFlags
 {
@@ -38,6 +40,8 @@ NengLogItem *NengLogAllocItem(int size);
 void NengLogFreeItem(NengLogItem *item);
 void NengLogClearItem(void);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

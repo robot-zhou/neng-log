@@ -1,9 +1,13 @@
 #ifndef __COMMON_ARRAY_H__
 #define __COMMON_ARRAY_H__
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
+#ifndef __unused
+#ifdef __GNUC__
+#define __unused __attribute__((__unused__))
+#else
+#define __unused 
+#endif
+#endif
 
 #define ARRAY_HEAD(name, type) \
     struct name                \
@@ -178,7 +182,7 @@ __BEGIN_DECLS
 #define ARRAY_GENERATE(name, type, fn_clr, fn_copy, fn_move, fn_cmp) \
     ARRAY_GENERATE_INTERNAL(name, type, fn_clr, fn_copy, fn_move, fn_cmp, )
 #define ARRAY_GENERATE_STATIC(name, type, fn_clr, fn_copy, fn_move, fn_cmp) \
-    ARRAY_GENERATE_INTERNAL(name, type, fn_clr, fn_copy, fn_move, fn_cmp, static __attribute_maybe_unused__)
+    ARRAY_GENERATE_INTERNAL(name, type, fn_clr, fn_copy, fn_move, fn_cmp, static __unused)
 
 #define ARRAY_RESIZE(name, x, size) \
     name##_ARRAY_RESIZE(x, size)
@@ -196,7 +200,5 @@ __BEGIN_DECLS
     name##_ARRAY_REMOVE(x, n, len)
 #define ARRAY_CLEAR(name, x) \
     name##_ARRAY_CLEAR(x)
-
-__END_DECLS
 
 #endif //__COMMON_ARRAY_H__

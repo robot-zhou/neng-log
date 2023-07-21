@@ -7,7 +7,9 @@
 
 #include "log_def.h"
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct stCode
 {
@@ -31,6 +33,8 @@ int __neng_log_bits_get(uint8_t *bits, int n, int val);
 int __neng_log_bits_empty(uint8_t *bits, int n);
 void __neng_log_bits_clear(uint8_t *bits, int n);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

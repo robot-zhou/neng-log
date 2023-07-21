@@ -1,10 +1,11 @@
 #ifndef __NENG_PROPERTIES_H__
 #define __NENG_PROPERTIES_H__
 
-#include <sys/cdefs.h>
 #include <common/tree.h>
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum ePropertiesUnitType
 {
@@ -33,6 +34,8 @@ int _properties_get_int(PropertiesHead *root, const char *name, int *out_val, in
 int _properties_get_defint(PropertiesHead *root, const char *name, int dev_val, int unit_type);
 int _properties_get_defbool(PropertiesHead *root, const char *name, int dev_val);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __NENG_PROPERTIES_H__

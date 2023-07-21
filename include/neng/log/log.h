@@ -14,7 +14,9 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // 日志输出 相关接口
@@ -365,15 +367,6 @@ void NengLogFilterClearLevelBit(NengLogFilter *filter);
  * @param filter    日志过滤器
  */
 void NengLogFilterClear(NengLogFilter *filter);
-//
-/**
- * @brief 判断Filter是否为空； 空： 不含有任何mod，tag， level
- *
- * @param filter    日志过滤器
- * @return int  1: 为空，
- *              0: 不为空
- */
-int NengLogFilterIsEmpty(NengLogFilter *filter);
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Log Appender 相关接口
@@ -462,6 +455,8 @@ void NengLogClearAppender(void);
  */
 void NengLogAppenderClear(NengLogAppender *appender);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

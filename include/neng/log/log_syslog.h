@@ -4,7 +4,9 @@
 #include <syslog.h>
 #include "log.h"
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief   系统日志appender的内部过滤器，被投递到系统日志appender的日志，并且匹配到NengLogSyslogFilter；
@@ -60,6 +62,8 @@ void NengLogSyslogAppenderAddFilter(NengLogSyslogAppender *sys_appender, const N
  */
 void NengLogSyslogAppenderClearFilter(NengLogSyslogAppender *sys_appender);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

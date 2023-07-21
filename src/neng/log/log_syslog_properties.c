@@ -7,6 +7,7 @@
 
 #include <neng/log/log_syslog.h>
 
+#include "log_filter.h"
 #include "log_misc.h"
 #include "log_properties_misc.h"
 

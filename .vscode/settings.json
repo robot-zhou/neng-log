@@ -18,6 +18,7 @@
         "log_syslog.h": "c",
         "syslog.h": "c",
         "errno-base.h": "c",
-        "properties.h": "c"
+        "properties.h": "c",
+        "log.h": "c"
     }
 }

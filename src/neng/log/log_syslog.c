@@ -9,6 +9,7 @@
 
 #include "log_def.h"
 #include "log_misc.h"
+#include "log_filter.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filter Item
@@ -110,6 +111,7 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
     }
 
     int pri = item->level;
+    int hit_filter = 0;
     NengLogSyslogFilterItem *filter_item = NULL;
 
     TAILQ_FOREACH(filter_item, &(sys_appender_ex->filter_list), list_entry)
@@ -117,43 +119,19 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
         NengLogSyslogFilter *sys_filter = &(filter_item->sys_filter);
         NengLogFilter *filter = &(sys_filter->filter);
 
-        if (NengLogFilterModBitIsEmpty(filter) == 0)
+        if (sys_filter->facility != 0 && NengLogFilterHit(filter, item->mod, item->tag, item->level) == 1)
         {
-            if (item->mod <= 0 || NengLogFilterGetModBit(filter, item->mod) != 1)
-            {
-                continue;
-            }
-        }
-
-        if (NengLogFilterTagBitIsEmpty(filter) == 0)
-        {
-            if (item->tag <= 0 || NengLogFilterGetTagBit(filter, item->tag) != 1)
-            {
-                continue;
-            }
-        }
-
-        if (NengLogFilterLevelBitIsEmpty(filter) == 0)
-        {
-            if (NengLogFilterGetLevelBit(filter, item->level) != 1)
-            {
-                continue;
-            }
-        }
-
-        if (sys_filter->facility != 0)
-        {
-            pri |= sys_filter->facility & LOG_FACMASK;
-            break;
+            int loc_pri = pri | (sys_filter->facility & LOG_FACMASK);
+            __syslog_write(loc_pri, "%s%s", buf, item->content);
+            hit_filter = 1;
         }
     }
 
-    if (filter_item == NULL)
+    if (hit_filter == 0)
     {
         pri |= sys_appender->facility & LOG_FACMASK;
+        __syslog_write(pri, "%s%s", buf, item->content);
     }
-
-    __syslog_write(pri, "%s%s", buf, item->content);
 }
 
 static void NengLogSyslogRelease(struct stNengLogAppender *appender)

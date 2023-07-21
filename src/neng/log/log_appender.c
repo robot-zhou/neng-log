@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log_filter.h"
 #include "log_appender.h"
 
 ////////////////////////////////////////////////////////////////////
@@ -248,31 +249,10 @@ int NengLogAppenderHitLogItem(NengLogAppender *appender, NengLogItem *item)
     {
         NengLogFilter *filter = &(filter_item->filter);
 
-        if (NengLogFilterModBitIsEmpty(filter) == 0)
+        if (NengLogFilterHit(filter, item->mod, item->tag, item->level) == 1)
         {
-            if (item->mod < 0 || NengLogFilterGetModBit(filter, item->mod) != 1)
-            {
-                continue;
-            }
+            return 1;
         }
-
-        if (NengLogFilterTagBitIsEmpty(filter) == 0)
-        {
-            if (item->tag < 0 || NengLogFilterGetTagBit(filter, item->tag) != 1)
-            {
-                continue;
-            }
-        }
-
-        if (NengLogFilterLevelBitIsEmpty(filter) == 0)
-        {
-            if (item->level < 0 || NengLogFilterGetLevelBit(filter, item->level) != 1)
-            {
-                continue;
-            }
-        }
-
-        return 1;
     }
 
     return 0;

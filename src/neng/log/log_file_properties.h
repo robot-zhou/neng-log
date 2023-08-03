@@ -5,14 +5,10 @@
 
 #include "properties.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
-NengLogAppender *NengLogLoadFileProperties(const char *prefix, PropertiesHead *root);
+NengLogAppender *NengLogLoadFileProperties(const char *prefix, NengLogPropertiesHandler handler);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif //__NENG_LOG_FILE_PROPERTIES_H__

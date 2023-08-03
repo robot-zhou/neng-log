@@ -14,6 +14,7 @@
 #include "log_misc.h"
 #include "log_item.h"
 #include "log_appender.h"
+#include "sysfunc.h"
 
 ////////////////////////////////////////////////////////////////////
 // 日志通用头输出函数
@@ -228,9 +229,9 @@ void NengLogEnableAsync(int enable)
     _enable_async = enable;
 }
 
-static void NengLogAppenderListWrite(AppenderList *appender_list, NengLogItem *item)
+static void NengLogAppenderListWrite(NengLogAppenderList *appender_list, NengLogItem *item)
 {
-    AppenderListItem *list_item = NULL;
+    NengLogAppenderListItem *list_item = NULL;
 
     TAILQ_FOREACH(list_item, appender_list, entry)
     {
@@ -271,9 +272,9 @@ static void *_log_async_routine(void *arg)
         TAILQ_REMOVE(&_log_async_list, item_head, entry);
         pthread_mutex_unlock(&_async_mtx);
 
-        pthread_rwlock_rdlock(&_appener_list_rwlock);
-        NengLogAppenderListWrite(&_appender_list, NENG_LOG_HEAD2ITEM(item_head));
-        pthread_rwlock_unlock(&_appener_list_rwlock);
+        pthread_rwlock_rdlock(&_neng_log_appender_list_rwlock);
+        NengLogAppenderListWrite(&_neng_log_appender_list, NENG_LOG_HEAD2ITEM(item_head));
+        pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
 
         NengLogFreeItem(NENG_LOG_HEAD2ITEM(item_head));
     }
@@ -324,20 +325,20 @@ static void NengLogWrite(NengLogItem *item)
     int async = 0;
     NengLogItemHead *item_head = NENG_LOG_ITEM2HEAD(item);
 
-    pthread_rwlock_rdlock(&_appener_list_rwlock);
-    NengLogAppenderListWrite(&_appender_sync_list, item);
+    pthread_rwlock_rdlock(&_neng_log_appender_list_rwlock);
+    NengLogAppenderListWrite(&_neng_log_appender_sync_list, item);
     if (!_enable_async || item_head->flags.u_bits.is_sync == 1)
     {
-        NengLogAppenderListWrite(&_appender_list, item);
+        NengLogAppenderListWrite(&_neng_log_appender_list, item);
     }
     else
     {
-        if (TAILQ_FIRST(&_appender_list) != NULL)
+        if (TAILQ_FIRST(&_neng_log_appender_list) != NULL)
         {
             async = 1;
         }
     }
-    pthread_rwlock_unlock(&_appener_list_rwlock);
+    pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
 
     if (async == 1)
     {
@@ -428,9 +429,9 @@ void NengLogV(int mod, int tag, const char *file, const char *func, int line, in
     _install_onexit();
 #endif
 
-    int  mod_level = NengLogGetLevel(mod);
+    int mod_level = NengLogGetLevel(mod);
     uint8_t log_flags = (uint8_t)(((uint32_t)level & 0xff00) >> 8);
-    
+
     level = level & 0x00ff;
     if (mod_level >= 0)
     {
@@ -461,13 +462,13 @@ void NengLogV(int mod, int tag, const char *file, const char *func, int line, in
     item->mod = mod;
     item->tag = tag;
     item->pid = getpid();
-    item->tid = gettid();
-    item->time = get_systemtime_millisec();
+    item->tid = neng_log_sys_gettid();
+    item->time = neng_log_sys_gettime_millisec();
     item->level = level;
     item->line = line;
 
-    get_hostname(item->hostname, sizeof(item->hostname));
-    get_progname(item->progname, sizeof(item->progname));
+    __neng_log_get_hostname(item->hostname, sizeof(item->hostname));
+    __neng_log_get_progname(item->progname, sizeof(item->progname));
 
     if (file != NULL)
     {
@@ -498,11 +499,11 @@ void NengLog(int mod, int tag, const char *file, const char *func, int line, int
 
 void NengLogClose(void)
 {
-    AppenderListItem *appender_item = NULL;
+    NengLogAppenderListItem *appender_item = NULL;
 
-    pthread_rwlock_rdlock(&_appener_list_rwlock);
+    pthread_rwlock_rdlock(&_neng_log_appender_list_rwlock);
 
-    TAILQ_FOREACH(appender_item, &(_appender_list), entry)
+    TAILQ_FOREACH(appender_item, &(_neng_log_appender_list), entry)
     {
         pthread_mutex_lock(&(appender_item->mtx));
         if (appender_item->appender->close_fn != NULL)
@@ -512,7 +513,7 @@ void NengLogClose(void)
         pthread_mutex_unlock(&(appender_item->mtx));
     }
 
-    TAILQ_FOREACH(appender_item, &(_appender_sync_list), entry)
+    TAILQ_FOREACH(appender_item, &(_neng_log_appender_sync_list), entry)
     {
         pthread_mutex_lock(&(appender_item->mtx));
         if (appender_item->appender->close_fn != NULL)
@@ -522,7 +523,7 @@ void NengLogClose(void)
         pthread_mutex_unlock(&(appender_item->mtx));
     }
 
-    pthread_rwlock_unlock(&_appener_list_rwlock);
+    pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
 }
 
 void NengLogClear(void)

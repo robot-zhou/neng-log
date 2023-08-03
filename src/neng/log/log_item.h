@@ -6,9 +6,7 @@
 
 #include "log_def.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 typedef union unNengLogItemFlags
 {
@@ -22,7 +20,8 @@ typedef union unNengLogItemFlags
 
 typedef struct stNengLogItemHead
 {
-    TAILQ_ENTRY(stNengLogItemHead) entry;
+    TAILQ_ENTRY(stNengLogItemHead)
+    entry;
     int size;
     NengLogItemFlags flags;
 } NengLogItemHead;
@@ -40,8 +39,6 @@ NengLogItem *NengLogAllocItem(int size);
 void NengLogFreeItem(NengLogItem *item);
 void NengLogClearItem(void);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif

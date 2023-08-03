@@ -82,7 +82,7 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
     {
         if (sys_appender->ident[0] == '\0')
         {
-            get_progname(sys_appender->ident, sizeof(sys_appender->ident));
+            __neng_log_get_progname(sys_appender->ident, sizeof(sys_appender->ident));
         }
 
         openlog(sys_appender->ident, sys_appender->option, sys_appender->facility);

@@ -11,7 +11,7 @@
 #include "log_misc.h"
 #include "log_properties_misc.h"
 
-static Code _SyslogOptionNames[] = {
+static NengLogCode _SyslogOptionNames[] = {
     {"LOG_PID", LOG_PID},
     {"PID", LOG_PID},
     {"LOG_CONS", LOG_CONS},
@@ -55,7 +55,7 @@ static int _string2syslogoption(const char *s)
     return option;
 }
 
-static Code _FacilityNames[] = {
+static NengLogCode _FacilityNames[] = {
     {"auth", LOG_AUTH},
     {"authpriv", LOG_AUTHPRIV},
     {"cron", LOG_CRON},
@@ -95,18 +95,18 @@ static int _string2facility(const char *s)
     return 0;
 }
 
-NengLogAppender *NengLogLoadSyslogProperties(const char *prefix, PropertiesHead *root)
+NengLogAppender *NengLogLoadSyslogProperties(const char *prefix, NengLogPropertiesHandler handler)
 {
     char name[128] = {0};
 
     snprintf(name, sizeof(name), "%s.ident", prefix);
-    char *ident = _properties_get(root, name);
+    char *ident = _neng_log_properties_get(handler, name);
 
     snprintf(name, sizeof(name), "%s.option", prefix);
-    int option = _string2syslogoption(_properties_get(root, name));
+    int option = _string2syslogoption(_neng_log_properties_get(handler, name));
 
     snprintf(name, sizeof(name), "%s.facility", prefix);
-    int facility = _string2facility(_properties_get(root, name));
+    int facility = _string2facility(_neng_log_properties_get(handler, name));
 
     NengLogSyslogAppender *sys_appender = NengLogCreateSyslogAppender(ident, option, facility);
     if (sys_appender == NULL)
@@ -119,7 +119,7 @@ NengLogAppender *NengLogLoadSyslogProperties(const char *prefix, PropertiesHead 
         NengLogSyslogFilter sys_filter = {0};
 
         snprintf(name, sizeof(name), "%s.facility_filter[%d].facility", prefix, n);
-        const char *faility_pr = _properties_get(root, name);
+        const char *faility_pr = _neng_log_properties_get(handler, name);
         if (faility_pr == NULL)
         {
             if (n > 0)
@@ -137,7 +137,7 @@ NengLogAppender *NengLogLoadSyslogProperties(const char *prefix, PropertiesHead 
         }
 
         snprintf(name, sizeof(name), "%s.facility_filter[%d]", prefix, n);
-        if (_LoadAppenderFilter(name, root, &(sys_filter.filter)) != 0)
+        if (_NengLogLoadFilterProperties(name, handler, &(sys_filter.filter)) != 0)
         {
             continue;
         }
@@ -150,6 +150,6 @@ NengLogAppender *NengLogLoadSyslogProperties(const char *prefix, PropertiesHead 
         NengLogSyslogAppenderAddFilter(sys_appender, &sys_filter);
     }
 
-    _LoadAppenderProperties(prefix, root, &(sys_appender->appender));
+    _NengLogLoadAppenderProperties(prefix, handler, &(sys_appender->appender));
     return &(sys_appender->appender);
 }

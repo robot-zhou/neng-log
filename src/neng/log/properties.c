@@ -5,15 +5,33 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <common/array.h>
+#include <common/tree.h>
 
 #include "log_misc.h"
 
-int __property_cmp(const struct stProperty *p1, const struct stProperty *p2)
+////////////////////////////////////////////////////////////////////
+// astr
+typedef ARRAY_HEAD(neng_log_astr_, char) neng_log_astr_t;
+ARRAY_GENERATE_STATIC(neng_log_astr_, char, NULL, NULL, NULL, NULL);
+
+////////////////////////////////////////////////////////////////////
+// properity
+typedef struct stNengLogProperty
+{
+    RB_ENTRY(stNengLogProperty)
+    rb_entry;
+    char *name;
+    char *property;
+} NengLogProperty;
+
+static int __neng_log_property_cmp(const struct stNengLogProperty *p1, const struct stNengLogProperty *p2)
 {
     return strcasecmp(p1->name, p2->name);
 }
 
-RB_GENERATE(stPropertiesHead, stProperty, rb_entry, __property_cmp);
+typedef RB_HEAD(stNengLogPropertiesHead, stNengLogProperty) NengLogPropertiesHead;
+RB_GENERATE_STATIC(stNengLogPropertiesHead, stNengLogProperty, rb_entry, __neng_log_property_cmp);
 
 typedef struct stPropertiesParser
 {
@@ -21,8 +39,8 @@ typedef struct stPropertiesParser
     int prev_space;
     int have_equal;
     int is_escape;
-    astr_t key;
-    astr_t val;
+    neng_log_astr_t key;
+    neng_log_astr_t val;
 } PropertiesParser;
 
 #define PROPERTIES_PARSER_INITIALIZER(x)                                                                                              \
@@ -30,18 +48,18 @@ typedef struct stPropertiesParser
         .status = 0, .prev_space = 0, .have_equal = 0, .is_escape = 0, .key = ARRAY_INITIALIZER(.key), .val = ARRAY_INITIALIZER(.key) \
     }
 
-#define PROPERTIES_PARSER_CLEAR(x)       \
-    do                                   \
-    {                                    \
-        ARRAY_CLEAR(astr_, &((x)->key)); \
-        ARRAY_CLEAR(astr_, &((x)->val)); \
-        (x)->status = 0;                 \
-        (x)->prev_space = 0;             \
-        (x)->have_equal = 0;             \
-        (x)->is_escape = 0;              \
+#define PROPERTIES_PARSER_CLEAR(x)                \
+    do                                            \
+    {                                             \
+        ARRAY_CLEAR(neng_log_astr_, &((x)->key)); \
+        ARRAY_CLEAR(neng_log_astr_, &((x)->val)); \
+        (x)->status = 0;                          \
+        (x)->prev_space = 0;                      \
+        (x)->have_equal = 0;                      \
+        (x)->is_escape = 0;                       \
     } while (0)
 
-static int _properties_append_string(astr_t *s, char ch, int *escape)
+static int _properties_append_string(neng_log_astr_t *s, char ch, int *escape)
 {
     if (*escape == 0)
     {
@@ -51,26 +69,26 @@ static int _properties_append_string(astr_t *s, char ch, int *escape)
             return 0;
         }
 
-        return ARRAY_APPEND(astr_, s, ch);
+        return ARRAY_APPEND(neng_log_astr_, s, ch);
     }
 
     switch (ch)
     {
     case 'r':
-        ARRAY_APPEND(astr_, s, '\r');
+        ARRAY_APPEND(neng_log_astr_, s, '\r');
         break;
     case 'n':
-        ARRAY_APPEND(astr_, s, '\n');
+        ARRAY_APPEND(neng_log_astr_, s, '\n');
         break;
     case 't':
-        ARRAY_APPEND(astr_, s, '\t');
+        ARRAY_APPEND(neng_log_astr_, s, '\t');
         break;
     case '\\':
-        ARRAY_APPEND(astr_, s, '\\');
+        ARRAY_APPEND(neng_log_astr_, s, '\\');
         break;
     default:
-        ARRAY_APPEND(astr_, s, '\\');
-        ARRAY_APPEND(astr_, s, ch);
+        ARRAY_APPEND(neng_log_astr_, s, '\\');
+        ARRAY_APPEND(neng_log_astr_, s, ch);
         break;
     }
 
@@ -78,7 +96,7 @@ static int _properties_append_string(astr_t *s, char ch, int *escape)
     return 0;
 }
 
-static int _properties_parser_write(PropertiesParser *p, const char *buf, int len, PropertiesHead *root)
+static int _properties_parser_write(PropertiesParser *p, const char *buf, int len, NengLogPropertiesHead *root)
 {
     // <sapce:0> <key_name:1> <space:2> <=:3> <space:4> <value:5> <#xxx:7>, 8: error
     // .........<line wrap: 6>
@@ -171,7 +189,7 @@ static int _properties_parser_write(PropertiesParser *p, const char *buf, int le
             {
                 if (p->have_equal && p->key.len > 0)
                 {
-                    Property *prop = (Property *)calloc(1, sizeof(Property));
+                    NengLogProperty *prop = (NengLogProperty *)calloc(1, sizeof(NengLogProperty));
                     if (prop != NULL)
                     {
                         prop->name = strdup(p->key.p);
@@ -180,12 +198,12 @@ static int _properties_parser_write(PropertiesParser *p, const char *buf, int le
                             prop->property = strdup(p->val.p);
                         }
 
-                        RB_INSERT(stPropertiesHead, root, prop);
+                        RB_INSERT(stNengLogPropertiesHead, root, prop);
                     }
                 }
 
-                ARRAY_CLEAR(astr_, &(p->key));
-                ARRAY_CLEAR(astr_, &(p->val));
+                ARRAY_CLEAR(neng_log_astr_, &(p->key));
+                ARRAY_CLEAR(neng_log_astr_, &(p->val));
                 p->status = 0;
                 p->prev_space = 0;
                 p->have_equal = 0;
@@ -207,7 +225,7 @@ static int _properties_parser_write(PropertiesParser *p, const char *buf, int le
                 _properties_append_string(&(p->key), ch, &(p->is_escape));
                 break;
             case 2:
-                ARRAY_APPEND_N(astr_, &(p->key), ' ', p->prev_space);
+                ARRAY_APPEND_N(neng_log_astr_, &(p->key), ' ', p->prev_space);
                 if (p->prev_space > 0)
                 {
                     p->is_escape = 0;
@@ -249,7 +267,7 @@ static int _properties_parser_write(PropertiesParser *p, const char *buf, int le
                 _properties_append_string(&(p->key), ch, &(p->is_escape));
                 break;
             case 2:
-                ARRAY_APPEND_N(astr_, &(p->key), ' ', p->prev_space);
+                ARRAY_APPEND_N(neng_log_astr_, &(p->key), ' ', p->prev_space);
                 if (p->prev_space > 0)
                 {
                     p->is_escape = 0;
@@ -284,19 +302,27 @@ static int _properties_parser_write(PropertiesParser *p, const char *buf, int le
     return 0;
 }
 
-int _properties_read_file(const char *filepath, PropertiesHead *root)
+NengLogPropertiesHandler _neng_log_properties_read_file(const char *filepath)
 {
     int fd = open(filepath, O_RDONLY, 0);
 
     if (fd == -1)
     {
-        return -1;
+        return NULL;
     }
 
     int ret = 1;
     char buf[1024] = {0};
     PropertiesParser parser = PROPERTIES_PARSER_INITIALIZER(parser);
+    NengLogPropertiesHead *root = calloc(sizeof(NengLogPropertiesHead), 1);
 
+    if (root == NULL)
+    {
+        return NULL;
+    }
+
+    RB_INIT(root);
+    
     do
     {
         ret = read(fd, buf, sizeof(buf));
@@ -316,68 +342,77 @@ int _properties_read_file(const char *filepath, PropertiesHead *root)
 
     PROPERTIES_PARSER_CLEAR(&parser);
     close(fd);
-    return ret;
+
+    if (ret < 0)
+    {
+        int lerrno = errno;
+        free(root);
+        errno = lerrno;
+        return NULL;
+    }
+
+    return (NengLogPropertiesHandler)root;
 }
 
 static char _null_str[] = "\0";
-char *_properties_get(PropertiesHead *root, const char *name)
+char *_neng_log_properties_get(NengLogPropertiesHandler handler, const char *name)
 {
+    NengLogPropertiesHead *root = (NengLogPropertiesHead *)handler;
     char namebuf[512] = {0};
-    Property *find = NULL;
-    Property var = {.name = namebuf};
+    NengLogProperty *find = NULL;
+    NengLogProperty var = {.name = namebuf};
 
     strncpy(namebuf, name, sizeof(namebuf) - 1);
-    find = RB_FIND(stPropertiesHead, root, &var);
+    find = RB_FIND(stNengLogPropertiesHead, root, &var);
     return (find != NULL) ? (find->property ? find->property : _null_str) : NULL;
 }
 
-int _properties_unittype_int(int val, char *endptr, int unit_type)
+int _neng_log_properties_unittype_int(int val, char endchar, int unit_type)
 {
-    if (endptr != NULL && endptr[0] != '\0')
+    if (unit_type == kNengLogPropertiesUnitTypeTime)
     {
-        if (unit_type == kPropertiesUnitTypeTime)
+        switch (endchar)
         {
-            switch (*endptr)
-            {
-            case 'H':
-            case 'h':
-                val *= 3600;
-                break;
-            case 'M':
-            case 'm':
-                val *= 60;
-                break;
-            default:
-                break;
-            }
+        case 'H':
+        case 'h':
+            val *= 3600;
+            break;
+        case 'M':
+        case 'm':
+            val *= 60;
+            break;
+        default:
+            break;
         }
-        else if (unit_type == kPropertiesUnitTypeByte)
+    }
+    else if (unit_type == kNengLogPropertiesUnitTypeByte)
+    {
+        switch (endchar)
         {
-            switch (*endptr)
-            {
-            case 'K':
-            case 'k':
-                val *= 1024;
-                break;
-            case 'M':
-            case 'm':
-                val *= (1024 * 1024);
-                break;
-            case 'G':
-            case 'g':
-                val *= (1024 * 1024 * 1024);
-            default:
-                break;
-            }
+        case 'K':
+        case 'k':
+            val *= 1024;
+            break;
+        case 'M':
+        case 'm':
+            val *= (1024 * 1024);
+            break;
+        case 'G':
+        case 'g':
+            val *= (1024 * 1024 * 1024);
+        default:
+            break;
         }
     }
 
     return val;
 }
 
-int _properties_get_int(PropertiesHead *root, const char *name, int *out_val, int unit_type)
+int _neng_log_properties_get_int(NengLogPropertiesHandler handler, const char *name, int *out_val, int unit_type)
 {
-    char *p = _properties_get(root, name);
+    NengLogPropertiesHead *root = (NengLogPropertiesHead *)handler;
+    char *p = _neng_log_properties_get(root, name);
+
     if (p == NULL)
     {
         return 0;
@@ -392,16 +427,18 @@ int _properties_get_int(PropertiesHead *root, const char *name, int *out_val, in
 
     if (*out_val)
     {
-        val = _properties_unittype_int(val, endptr, unit_type);
+        val = _neng_log_properties_unittype_int(val, endptr ? *endptr : '\0', unit_type);
         *out_val = val;
     }
 
     return 1;
 }
 
-int _properties_get_defint(PropertiesHead *root, const char *name, int dev_val, int unit_type)
+int _neng_log_properties_get_defint(NengLogPropertiesHandler handler, const char *name, int dev_val, int unit_type)
 {
-    char *p = _properties_get(root, name);
+    NengLogPropertiesHead *root = (NengLogPropertiesHead *)handler;
+    char *p = _neng_log_properties_get(root, name);
+
     if (p == NULL)
     {
         return dev_val;
@@ -414,12 +451,14 @@ int _properties_get_defint(PropertiesHead *root, const char *name, int dev_val, 
         return dev_val;
     }
 
-    return _properties_unittype_int(val, endptr, unit_type);
+    return _neng_log_properties_unittype_int(val, endptr ? *endptr : '\0', unit_type);
 }
 
-int _properties_get_defbool(PropertiesHead *root, const char *name, int dev_val)
+int _neng_log_properties_get_defbool(NengLogPropertiesHandler handler, const char *name, int dev_val)
 {
-    char *p = _properties_get(root, name);
+    NengLogPropertiesHead *root = (NengLogPropertiesHead *)handler;
+    char *p = _neng_log_properties_get(root, name);
+
     if (p == NULL)
     {
         return dev_val;
@@ -433,13 +472,14 @@ int _properties_get_defbool(PropertiesHead *root, const char *name, int dev_val)
     return 0;
 }
 
-void _properties_clear(PropertiesHead *root)
+void _neng_log_properties_clear(NengLogPropertiesHandler handler)
 {
-    Property *v = NULL;
+    NengLogPropertiesHead *root = (NengLogPropertiesHead *)handler;
+    NengLogProperty *v = NULL;
 
-    while ((v = RB_MIN(stPropertiesHead, root)) != NULL)
+    while ((v = RB_MIN(stNengLogPropertiesHead, root)) != NULL)
     {
-        RB_REMOVE(stPropertiesHead, root, v);
+        RB_REMOVE(stNengLogPropertiesHead, root, v);
         if (v->name)
         {
             free(v->name);
@@ -452,4 +492,5 @@ void _properties_clear(PropertiesHead *root)
     }
 
     RB_INIT(root);
+    free(root);
 }

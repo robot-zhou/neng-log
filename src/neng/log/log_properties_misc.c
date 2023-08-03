@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <common/array.h>
 
 #include "log_filter.h"
 
-ARRAY_GENERATE(stIntArray, int, NULL, NULL, NULL, NULL);
+typedef ARRAY_HEAD(stIntArray, int) IntArray;
+ARRAY_GENERATE_STATIC(stIntArray, int, NULL, NULL, NULL, NULL);
 
-int _string2ints(const char *s, IntArray *int_head)
+static int _string2ints(const char *s, IntArray *int_head)
 {
     char *tmp = strdup(s);
     if (tmp == NULL)
@@ -34,7 +36,7 @@ int _string2ints(const char *s, IntArray *int_head)
     return 0;
 }
 
-int _string2levels(const char *s, IntArray *int_head)
+static int _string2levels(const char *s, IntArray *int_head)
 {
     char *tmp = strdup(s);
     if (tmp == NULL)
@@ -56,18 +58,18 @@ int _string2levels(const char *s, IntArray *int_head)
     return 0;
 }
 
-int _LoadAppenderFilter(const char *prefix, PropertiesHead *root, NengLogFilter *filter)
+int _NengLogLoadFilterProperties(const char *prefix, NengLogPropertiesHandler handler, NengLogFilter *filter)
 {
     char name[128] = {0};
 
     snprintf(name, sizeof(name), "%s.mods", prefix);
-    char *pmods = _properties_get(root, name);
+    char *pmods = _neng_log_properties_get(handler, name);
 
     snprintf(name, sizeof(name), "%s.tags", prefix);
-    char *ptags = _properties_get(root, name);
+    char *ptags = _neng_log_properties_get(handler, name);
 
     snprintf(name, sizeof(name), "%s.levels", prefix);
-    char *plevels = _properties_get(root, name);
+    char *plevels = _neng_log_properties_get(handler, name);
 
     if (pmods == NULL && ptags == NULL && plevels == NULL)
     {
@@ -116,7 +118,7 @@ int _LoadAppenderFilter(const char *prefix, PropertiesHead *root, NengLogFilter 
     return 0;
 }
 
-int _LoadAppenderFilterProperties(const char *prefix, PropertiesHead *root, NengLogAppender *appender)
+int _NengLogLoadAppenderFilterProperties(const char *prefix, NengLogPropertiesHandler handler, NengLogAppender *appender)
 {
     char name[128] = {0};
 
@@ -125,7 +127,7 @@ int _LoadAppenderFilterProperties(const char *prefix, PropertiesHead *root, Neng
         NengLogFilter filter = {0};
         snprintf(name, sizeof(name), "%s.filter[%d]", prefix, n);
 
-        if (_LoadAppenderFilter(name, root, &filter) != 0)
+        if (_NengLogLoadFilterProperties(name, handler, &filter) != 0)
         {
             if (n > 0)
             {
@@ -144,50 +146,50 @@ int _LoadAppenderFilterProperties(const char *prefix, PropertiesHead *root, Neng
     return 0;
 }
 
-int _LoadAppenderFlagsProperties(const char *prefix, PropertiesHead *root, NengLogAppender *appender)
+int _NengLogLoadAppenderFlagsProperties(const char *prefix, NengLogPropertiesHandler handler, NengLogAppender *appender)
 {
     char name[128] = {0};
 
     // flags
     snprintf(name, sizeof(name), "%s.flags.disable_time", prefix);
-    appender->flags.disable_time = _properties_get_defbool(root, name, 0);
+    appender->flags.disable_time = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_hostname", prefix);
-    appender->flags.enable_hostname = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_hostname = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_progname", prefix);
-    appender->flags.enable_progname = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_progname = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.disable_pid", prefix);
-    appender->flags.disable_pid = _properties_get_defbool(root, name, 0);
+    appender->flags.disable_pid = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.disable_level", prefix);
-    appender->flags.disable_level = _properties_get_defbool(root, name, 0);
+    appender->flags.disable_level = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_tid", prefix);
-    appender->flags.enable_tid = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_tid = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_mod", prefix);
-    appender->flags.enable_mod = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_mod = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_tag", prefix);
-    appender->flags.enable_tag = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_tag = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_file", prefix);
-    appender->flags.enable_file = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_file = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_func", prefix);
-    appender->flags.enable_func = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_func = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_fullpath", prefix);
-    appender->flags.enable_fullpath = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_fullpath = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.enable_tab_separator", prefix);
-    appender->flags.enable_tab_separator = _properties_get_defbool(root, name, 0);
+    appender->flags.enable_tab_separator = _neng_log_properties_get_defbool(handler, name, 0);
 
     snprintf(name, sizeof(name), "%s.flags.disable_async", prefix);
     int disable_async = 0;
-    if (1 == _properties_get_int(root, name, &disable_async, 0) && disable_async)
+    if (1 == _neng_log_properties_get_int(handler, name, &disable_async, 0) && disable_async)
     {
         appender->flags.disable_async = 1;
     }
@@ -195,9 +197,9 @@ int _LoadAppenderFlagsProperties(const char *prefix, PropertiesHead *root, NengL
     return 0;
 }
 
-int _LoadAppenderProperties(const char *prefix, PropertiesHead *root, NengLogAppender *appender)
+int _NengLogLoadAppenderProperties(const char *prefix, NengLogPropertiesHandler handler, NengLogAppender *appender)
 {
-    _LoadAppenderFlagsProperties(prefix, root, appender);
-    _LoadAppenderFilterProperties(prefix, root, appender);
+    _NengLogLoadAppenderFlagsProperties(prefix, handler, appender);
+    _NengLogLoadAppenderFilterProperties(prefix, handler, appender);
     return 0;
 }

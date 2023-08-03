@@ -15,15 +15,15 @@
 
 int NengLogLoadProperties(const char *filepath)
 {
-    PropertiesHead root = RB_INITIALIZER(root);
+    NengLogPropertiesHandler handler = _neng_log_properties_read_file(filepath);
 
-    if (0 != _properties_read_file(filepath, &root))
+    if (handler == NULL)
     {
         return -1;
     }
 
     // load global level
-    const char *level = _properties_get(&root, "log.level");
+    const char *level = _neng_log_properties_get(handler, "log.level");
     NengLogSetLevel(NengLogName2Level(level), 0);
 
     // load mod level
@@ -32,14 +32,14 @@ int NengLogLoadProperties(const char *filepath)
         char name[128] = {0};
         snprintf(name, sizeof(name), "log.level.mod.%d", n);
 
-        const char *level = _properties_get(&root, name);
+        const char *level = _neng_log_properties_get(handler, name);
         if (level)
         {
             NengLogSetLevel(NengLogName2Level(level), n);
         }
     }
 
-    char *appenders = _properties_get(&root, "log.appenders");
+    char *appenders = _neng_log_properties_get(handler, "log.appenders");
     appenders = (appenders != NULL) ? strdup(appenders) : NULL;
 
     if (appenders)
@@ -53,7 +53,7 @@ int NengLogLoadProperties(const char *filepath)
             NengLogAppender *appender = NULL;
 
             snprintf(name, sizeof(name), "log.appender.%s.type", item);
-            char *type = _properties_get(&root, name);
+            char *type = _neng_log_properties_get(handler, name);
             if (type == NULL || type[0] == '\0')
             {
                 continue;
@@ -62,12 +62,12 @@ int NengLogLoadProperties(const char *filepath)
             if (strcasecmp(type, "file") == 0)
             {
                 snprintf(name, sizeof(name), "log.appender.%s", item);
-                appender = NengLogLoadFileProperties(name, &root);
+                appender = NengLogLoadFileProperties(name, handler);
             }
             else if (strcasecmp(type, "syslog") == 0)
             {
                 snprintf(name, sizeof(name), "log.appender.%s", item);
-                appender = NengLogLoadSyslogProperties(name, &root);
+                appender = NengLogLoadSyslogProperties(name, handler);
             }
             else
             {
@@ -83,6 +83,6 @@ int NengLogLoadProperties(const char *filepath)
         free(appenders);
     } // if (appenders)
 
-    _properties_clear(&root);
+    _neng_log_properties_clear(handler);
     return 0;
 }

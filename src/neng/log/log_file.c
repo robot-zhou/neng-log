@@ -11,12 +11,14 @@
 #include <errno.h>
 
 #include "log_misc.h"
+#include "sysfunc.h"
 
 #define NENG_LOG_FILE_MAX_LOOP 30
 
 typedef struct stNengLogFileContext
 {
     int fd;
+    long timezone_offset;
     int64_t last_mtime;
     uint64_t file_size;
     uint16_t is_tty : 1;
@@ -125,7 +127,7 @@ static void __rotatefile(NengLogFileAppender *file_appender)
 
     if (file_appender->max_days > 0)
     {
-        int before_time = get_systemtime_millisec() / 1000 - file_appender->max_days * 24 * 3600;
+        int before_time = neng_log_sys_gettime_millisec() / 1000 - file_appender->max_days * 24 * 3600;
 
         for (max_idx = 1;; max_idx++)
         {
@@ -200,9 +202,9 @@ static void NengLogFileWrite(struct stNengLogAppender *appender, const NengLogIt
         (file_appender->daily == 1 || file_appender->max_size > 0))
     {
         int rotate = 0;
-        const long timezone = get_timezone();
+        const long timezone = file_context->timezone_offset;
         const int day_sec_count = 24 * 60 * 60;
-        int64_t nowtm = get_systemtime_millisec() / 1000;
+        int64_t nowtm = neng_log_sys_gettime_millisec() / 1000;
 
         if (file_appender->daily == 1 &&
             ((nowtm + timezone) / day_sec_count != (file_context->last_mtime + timezone) / day_sec_count))
@@ -247,7 +249,7 @@ static void NengLogFileWrite(struct stNengLogAppender *appender, const NengLogIt
     __WRITE_WRAP(file_appender, file_context, buf, header_len);
     __WRITE_WRAP(file_appender, file_context, item->content, strlen(item->content));
     __WRITE_WRAP(file_appender, file_context, "\n", 1);
-    file_context->last_mtime = get_systemtime_millisec() / 1000;
+    file_context->last_mtime = neng_log_sys_gettime_millisec() / 1000;
 }
 
 static void NengLogFileClose(struct stNengLogAppender *appender)
@@ -293,6 +295,7 @@ NengLogFileAppender *NengLogCreateFileAppender(const char *filepath)
     file_context->fd = -1;
     file_context->last_mtime = -1;
     file_context->file_size = -1;
+    file_context->timezone_offset = neng_log_sys_gettimezone();
 
     return file_appender;
 }

@@ -6,42 +6,38 @@
 
 #include "log_def.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
-typedef struct stFilterItem
+typedef struct stNengLogFilterItem
 {
-    TAILQ_ENTRY(stFilterItem)
+    TAILQ_ENTRY(stNengLogFilterItem)
     entry;
     NengLogFilter filter;
-} FilterItem;
+} NengLogFilterItem;
 
-typedef TAILQ_HEAD(stFilterItemFilter, stFilterItem) FilterItemList;
+typedef TAILQ_HEAD(stNengLogFilterItemList, stNengLogFilterItem) NengLogFilterItemList;
 
-typedef struct stAppenderExtend
+typedef struct stNengLogAppenderExtend
 {
-    FilterItemList filter_list;
-} AppenderExtend;
+    NengLogFilterItemList filter_list;
+} NengLogAppenderExtend;
 
-typedef struct stAppenderListItem
+typedef struct stNengLogAppenderListItem
 {
-    TAILQ_ENTRY(stAppenderListItem)
+    TAILQ_ENTRY(stNengLogAppenderListItem)
     entry;
     pthread_mutex_t mtx;
     NengLogAppender *appender;
-} AppenderListItem;
+} NengLogAppenderListItem;
 
-typedef TAILQ_HEAD(stAppenderList, stAppenderListItem) AppenderList;
+typedef TAILQ_HEAD(stNengLogAppenderList, stNengLogAppenderListItem) NengLogAppenderList;
 
-extern pthread_rwlock_t _appener_list_rwlock;
-extern AppenderList _appender_list;
-extern AppenderList _appender_sync_list;
+extern pthread_rwlock_t _neng_log_appender_list_rwlock;
+extern NengLogAppenderList _neng_log_appender_list;
+extern NengLogAppenderList _neng_log_appender_sync_list;
 
 int NengLogAppenderHitLogItem(NengLogAppender *appender, NengLogItem *item);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif

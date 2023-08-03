@@ -8,41 +8,41 @@
 
 ////////////////////////////////////////////////////////////////////
 // LogAppender Function
-pthread_rwlock_t _appener_list_rwlock = PTHREAD_RWLOCK_INITIALIZER;
-AppenderList _appender_list = TAILQ_HEAD_INITIALIZER(_appender_list);
-AppenderList _appender_sync_list = TAILQ_HEAD_INITIALIZER(_appender_sync_list);
+pthread_rwlock_t _neng_log_appender_list_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+NengLogAppenderList _neng_log_appender_list = TAILQ_HEAD_INITIALIZER(_neng_log_appender_list);
+NengLogAppenderList _neng_log_appender_sync_list = TAILQ_HEAD_INITIALIZER(_neng_log_appender_sync_list);
 
 int NengLogAddAppender(NengLogAppender *appender)
 {
-    pthread_rwlock_wrlock(&_appener_list_rwlock);
+    pthread_rwlock_wrlock(&_neng_log_appender_list_rwlock);
 
-    AppenderListItem *list_item = NULL;
+    NengLogAppenderListItem *list_item = NULL;
 
-    TAILQ_FOREACH(list_item, &_appender_sync_list, entry)
+    TAILQ_FOREACH(list_item, &_neng_log_appender_sync_list, entry)
     {
         if (list_item->appender == appender)
         {
             errno = EEXIST;
-            pthread_rwlock_unlock(&_appener_list_rwlock);
+            pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
             return -1;
         }
     }
 
-    TAILQ_FOREACH(list_item, &_appender_list, entry)
+    TAILQ_FOREACH(list_item, &_neng_log_appender_list, entry)
     {
         if (list_item->appender == appender)
         {
             errno = EEXIST;
-            pthread_rwlock_unlock(&_appener_list_rwlock);
+            pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
             return -1;
         }
     }
 
-    list_item = calloc(1, sizeof(AppenderListItem));
+    list_item = calloc(1, sizeof(NengLogAppenderListItem));
     if (list_item == NULL)
     {
         CRIT_LOG("alloc appender list fail: %s", strerror(errno));
-        pthread_rwlock_unlock(&_appener_list_rwlock);
+        pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
         return -1;
     }
 
@@ -51,40 +51,40 @@ int NengLogAddAppender(NengLogAppender *appender)
 
     if (appender->flags.disable_async)
     {
-        TAILQ_INSERT_TAIL(&_appender_sync_list, list_item, entry);
+        TAILQ_INSERT_TAIL(&_neng_log_appender_sync_list, list_item, entry);
     }
     else
     {
-        TAILQ_INSERT_TAIL(&_appender_list, list_item, entry);
+        TAILQ_INSERT_TAIL(&_neng_log_appender_list, list_item, entry);
     }
 
-    pthread_rwlock_unlock(&_appener_list_rwlock);
+    pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
 
     return 0;
 }
 
 int NengLogRemoveAppender(NengLogAppender *appender)
 {
-    pthread_rwlock_wrlock(&_appener_list_rwlock);
+    pthread_rwlock_wrlock(&_neng_log_appender_list_rwlock);
 
-    AppenderListItem *list_item = NULL;
+    NengLogAppenderListItem *list_item = NULL;
 
-    TAILQ_FOREACH(list_item, &_appender_sync_list, entry)
+    TAILQ_FOREACH(list_item, &_neng_log_appender_sync_list, entry)
     {
         if (list_item->appender == appender)
         {
-            TAILQ_REMOVE(&_appender_sync_list, list_item, entry);
+            TAILQ_REMOVE(&_neng_log_appender_sync_list, list_item, entry);
             break;
         }
     }
 
     if (list_item == NULL)
     {
-        TAILQ_FOREACH(list_item, &_appender_list, entry)
+        TAILQ_FOREACH(list_item, &_neng_log_appender_list, entry)
         {
             if (list_item->appender == appender)
             {
-                TAILQ_REMOVE(&_appender_list, list_item, entry);
+                TAILQ_REMOVE(&_neng_log_appender_list, list_item, entry);
                 break;
             }
         }
@@ -93,7 +93,7 @@ int NengLogRemoveAppender(NengLogAppender *appender)
     if (list_item == NULL)
     {
         errno = ENOENT;
-        pthread_rwlock_unlock(&_appener_list_rwlock);
+        pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
         return -1;
     }
 
@@ -104,18 +104,18 @@ int NengLogRemoveAppender(NengLogAppender *appender)
     }
     free(list_item);
 
-    pthread_rwlock_unlock(&_appener_list_rwlock);
+    pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
     return 0;
 }
 
 void NengLogClearAppender(void)
 {
-    pthread_rwlock_wrlock(&_appener_list_rwlock);
-    while (!TAILQ_EMPTY(&_appender_list))
+    pthread_rwlock_wrlock(&_neng_log_appender_list_rwlock);
+    while (!TAILQ_EMPTY(&_neng_log_appender_list))
     {
-        AppenderListItem *list_item = TAILQ_FIRST(&_appender_list);
+        NengLogAppenderListItem *list_item = TAILQ_FIRST(&_neng_log_appender_list);
 
-        TAILQ_REMOVE(&_appender_list, list_item, entry);
+        TAILQ_REMOVE(&_neng_log_appender_list, list_item, entry);
         pthread_mutex_destroy(&(list_item->mtx));
 
         NengLogAppenderClear(list_item->appender);
@@ -125,11 +125,11 @@ void NengLogClearAppender(void)
         }
         free(list_item);
     }
-    while (!TAILQ_EMPTY(&_appender_sync_list))
+    while (!TAILQ_EMPTY(&_neng_log_appender_sync_list))
     {
-        AppenderListItem *list_item = TAILQ_FIRST(&_appender_sync_list);
+        NengLogAppenderListItem *list_item = TAILQ_FIRST(&_neng_log_appender_sync_list);
 
-        TAILQ_REMOVE(&_appender_sync_list, list_item, entry);
+        TAILQ_REMOVE(&_neng_log_appender_sync_list, list_item, entry);
         pthread_mutex_destroy(&(list_item->mtx));
 
         NengLogAppenderClear(list_item->appender);
@@ -139,7 +139,7 @@ void NengLogClearAppender(void)
         }
         free(list_item);
     }
-    pthread_rwlock_unlock(&_appener_list_rwlock);
+    pthread_rwlock_unlock(&_neng_log_appender_list_rwlock);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +151,7 @@ static int _AppenerInitExtend(NengLogAppender *appender)
         return 0;
     }
 
-    AppenderExtend *extend = (AppenderExtend *)calloc(1, sizeof(AppenderExtend));
+    NengLogAppenderExtend *extend = (NengLogAppenderExtend *)calloc(1, sizeof(NengLogAppenderExtend));
     if (extend == NULL)
     {
         return -1;
@@ -164,7 +164,7 @@ static int _AppenerInitExtend(NengLogAppender *appender)
 
 static void _AppenderClearExtend(NengLogAppender *appender)
 {
-    AppenderExtend *extend = (AppenderExtend *)(appender->extend);
+    NengLogAppenderExtend *extend = (NengLogAppenderExtend *)(appender->extend);
 
     if (extend == NULL)
     {
@@ -204,8 +204,8 @@ int NengLogAppenderAddFilter(NengLogAppender *appender, NengLogFilter *filter)
         return -1;
     }
 
-    AppenderExtend *extend = (AppenderExtend *)(appender->extend);
-    FilterItem *filter_item = (FilterItem *)calloc(1, sizeof(FilterItem));
+    NengLogAppenderExtend *extend = (NengLogAppenderExtend *)(appender->extend);
+    NengLogFilterItem *filter_item = (NengLogFilterItem *)calloc(1, sizeof(NengLogFilterItem));
 
     if (filter_item == NULL)
     {
@@ -219,11 +219,11 @@ int NengLogAppenderAddFilter(NengLogAppender *appender, NengLogFilter *filter)
 
 void NengLogAppenderClearFilter(NengLogAppender *appender)
 {
-    AppenderExtend *extend = (AppenderExtend *)(appender->extend);
+    NengLogAppenderExtend *extend = (NengLogAppenderExtend *)(appender->extend);
 
     if (extend != NULL)
     {
-        FilterItem *item = NULL;
+        NengLogFilterItem *item = NULL;
         while ((item = TAILQ_FIRST(&(extend->filter_list))) != NULL)
         {
             TAILQ_REMOVE(&(extend->filter_list), item, entry);
@@ -236,14 +236,14 @@ void NengLogAppenderClearFilter(NengLogAppender *appender)
 // Appender Filter Hit
 int NengLogAppenderHitLogItem(NengLogAppender *appender, NengLogItem *item)
 {
-    AppenderExtend *extend = (AppenderExtend *)appender->extend;
+    NengLogAppenderExtend *extend = (NengLogAppenderExtend *)appender->extend;
 
     if (extend == NULL || TAILQ_EMPTY(&(extend->filter_list)))
     {
         return 1;
     }
 
-    FilterItem *filter_item = NULL;
+    NengLogFilterItem *filter_item = NULL;
 
     TAILQ_FOREACH(filter_item, &(extend->filter_list), entry)
     {

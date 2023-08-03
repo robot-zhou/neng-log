@@ -6,12 +6,12 @@
 
 #include "log_properties_misc.h"
 
-NengLogAppender *NengLogLoadFileProperties(const char *prefix, PropertiesHead *root)
+NengLogAppender *NengLogLoadFileProperties(const char *prefix, NengLogPropertiesHandler handler)
 {
     char name[128] = {0};
 
     snprintf(name, sizeof(name), "%s.filepath", prefix);
-    char *filepath = _properties_get(root, name);
+    char *filepath = _neng_log_properties_get(handler, name);
     if (filepath == NULL)
     {
         return NULL;
@@ -24,15 +24,15 @@ NengLogAppender *NengLogLoadFileProperties(const char *prefix, PropertiesHead *r
     }
 
     snprintf(name, sizeof(name), "%s.max_size", prefix);
-    file_appender->max_size = _properties_get_defint(root, name, 0, kPropertiesUnitTypeByte);
+    file_appender->max_size = _neng_log_properties_get_defint(handler, name, 0, kNengLogPropertiesUnitTypeByte);
     snprintf(name, sizeof(name), "%s.max_days", prefix);
-    file_appender->max_days = _properties_get_defint(root, name, 0, 0);
+    file_appender->max_days = _neng_log_properties_get_defint(handler, name, 0, 0);
     snprintf(name, sizeof(name), "%s.max_loop", prefix);
-    file_appender->max_loop = _properties_get_defint(root, name, 0, 0);
+    file_appender->max_loop = _neng_log_properties_get_defint(handler, name, 0, 0);
     snprintf(name, sizeof(name), "%s.daily", prefix);
-    file_appender->daily = _properties_get_defbool(root, name, 0);
+    file_appender->daily = _neng_log_properties_get_defbool(handler, name, 0);
 
-    _LoadAppenderProperties(prefix, root, &(file_appender->appender));
+    _NengLogLoadAppenderProperties(prefix, handler, &(file_appender->appender));
 
     return &(file_appender->appender);
 }

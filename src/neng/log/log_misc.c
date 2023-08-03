@@ -11,10 +11,6 @@
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////
-// astr
-ARRAY_GENERATE(astr_, char, NULL, NULL, NULL, NULL);
-
-////////////////////////////////////////////////////////////////////
 // NengLogAppender Bit Function
 inline int __neng_log_bits_set(uint8_t *bits, int n, int val)
 {
@@ -75,66 +71,6 @@ inline void __neng_log_bits_clear(uint8_t *bits, int n)
     memset(bits, 0, n);
 }
 
-////////////////////////////////////////////////////////////////////
-// System Function
-
-#if defined(__LINUX__)
-
-#include <sys/syscall.h>
-
-int gettid(void)
-{
-    return syscall(SYS_gettid);
-}
-
-#elif defined(__DARWIN__)
-#include <pthread.h>
-
-int gettid(void)
-{
-    uint64_t id = 0;
-    pthread_threadid_np(NULL, &id);
-    return (int)id;
-}
-
-#else
-
-int gettid(void)
-{
-    return 0;
-}
-
-#endif //__LINUX__
-
-int64_t get_systemtime_millisec(void)
-{
-    struct timeval tv = {0};
-
-    gettimeofday(&tv, NULL);
-
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-
-long get_timezone(void)
-{
-    static int64_t offset = -1;
-
-    if (offset != -1)
-    {
-        return offset;
-    }
-
-    time_t now = time(NULL);
-    struct tm *tm = localtime(&now);
-    if (tm == NULL)
-    {
-        return 0;
-    }
-
-    offset = tm->tm_gmtoff;
-    return offset;
-}
-
 static pthread_mutex_t _hostname_mtx = PTHREAD_MUTEX_INITIALIZER;
 static int _hostname_len = 0;
 static char _hostname[128] = {0};
@@ -154,7 +90,7 @@ static inline void __init_globals(void)
     pthread_mutex_unlock(&_hostname_mtx);
 }
 
-void get_hostname(char *buf, size_t n)
+void __neng_log_get_hostname(char *buf, size_t n)
 {
     if (_hostname_len <= 0)
     {
@@ -190,7 +126,7 @@ void NengLogSetProgName(const char *prog)
     }
 }
 
-void get_progname(char *buf, size_t n)
+void __neng_log_get_progname(char *buf, size_t n)
 {
     int m = 0;
 
@@ -226,7 +162,7 @@ const char *NengLogLevel2Name(int level)
     return "None";
 }
 
-static Code _Name2Level[] = {
+static NengLogCode _Name2Level[] = {
     {"Emerg", kNengLogEmerg},
     {"Alert", kNengLogAlert},
     {"Crit", kNengLogCrit},

@@ -14,9 +14,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // 日志输出 相关接口
@@ -404,7 +402,7 @@ typedef struct stNengLogAppender
 {
     char name[16];                         // appender 名称，
     NengLogItemWriterFunc writer_fn;       // 日志输出函数
-    NengLogAppenderReleaseFunc release_fn; // appender释放函数, 
+    NengLogAppenderReleaseFunc release_fn; // appender释放函数,
     NengLogAppenderCloseFunc close_fn;     // appender关闭函数
     NengLogAppenderFlags flags;            // appender日志头输出选项
     void *extend;                          // neng-log框架使用，初始化保持为空
@@ -412,7 +410,7 @@ typedef struct stNengLogAppender
 
 /**
  * @brief 向appender添加日志过滤器，只有匹配到过滤器的日志，才会被投递到此appener；如果appender不含有任何Filter，则所有日志都会被投递到此Appender。
- * 
+ *
  * @param appender  日志appender
  * @param filter    日志过滤器
  * @return int      成功返回0， 失败返回-1
@@ -421,14 +419,14 @@ int NengLogAppenderAddFilter(NengLogAppender *appender, NengLogFilter *filter);
 
 /**
  * @brief 清空appender的所有日志过滤器，appender不再含有任何日志Filter
- * 
+ *
  * @param appender 日志appender
  */
 void NengLogAppenderClearFilter(NengLogAppender *appender);
 
 /**
  * @brief 向neng-log框架添加appender，appender添加后， 由neng-log调用release_fn函数变量释放
- * 
+ *
  * @param appender 日志appender
  * @return int 成功返回0， 失败返回-1
  */
@@ -436,7 +434,7 @@ int NengLogAddAppender(NengLogAppender *appender);
 
 /**
  * @brief 从neng-log中移除appender， 由neng-log调用release_fn函数变量释放
- * 
+ *
  * @param appender 日志appender
  * @return int 成功返回0， 失败返回-1
  */
@@ -444,19 +442,17 @@ int NengLogRemoveAppender(NengLogAppender *appender);
 
 /**
  * @brief 清空所有appender
- * 
+ *
  */
 void NengLogClearAppender(void);
 
 /**
  * @brief 清理Appender本身extend成员指向的内部空间，一般由neng-log框架调用；
- * 
+ *
  * @param appender 日志Appender
  */
 void NengLogAppenderClear(NengLogAppender *appender);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif

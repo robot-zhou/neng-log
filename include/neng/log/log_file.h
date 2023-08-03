@@ -3,9 +3,7 @@
 
 #include "log.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 /**
  * @brief 输出到文件的appender
@@ -31,8 +29,6 @@ typedef struct stNengLogFileAppender
  */
 NengLogFileAppender *NengLogCreateFileAppender(const char *filepath);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif

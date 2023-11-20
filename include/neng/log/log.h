@@ -105,7 +105,17 @@ int NengLogName2Level(const char *name);
 #define NENG_LOG_FLAG_SYNC (0x01 << 8)
 
 /**
+ * @brief 检查日志级别
+ *
+ * @param mod 模块ID
+ * @param level 日志级别
+ * @return int 返回结果， 0: 未通过，1: 通过
+ */
+int NengLogCheckLeve(int mod, int level);
+
+/**
  * @brief 输出日志，like vsprintf， 一般不直接调用此函数，而是使用NENG_LOGVXXXX宏输出日志；
+ *   _NengLogV： 不检查级别，直接输出
  *
  * @param mod 模块ID
  * @param tag 标签ID
@@ -116,35 +126,49 @@ int NengLogName2Level(const char *name);
  * @param fmt 日志格式化字符串
  * @param ap 可变参数
  */
+void _NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap);
 void NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap);
 
 // 日志输出宏
-#define NENG_LOGV(level, fmt, ap)                                     \
-    do                                                                \
-    {                                                                 \
-        NengLogV(0, 0, __FILE__, __func__, __LINE__, level, fmt, ap); \
+#define NENG_LOGV(level, fmt, ap)                                          \
+    do                                                                     \
+    {                                                                      \
+        if (NengLogCheckLeve(0, level))                                    \
+        {                                                                  \
+            _NengLogV(0, 0, __FILE__, __func__, __LINE__, level, fmt, ap); \
+        }                                                                  \
     } while (0)
 
-#define NENG_LOGVM(mod, level, fmt, ap)                                 \
-    do                                                                  \
-    {                                                                   \
-        NengLogV(mod, 0, __FILE__, __func__, __LINE__, level, fmt, ap); \
+#define NENG_LOGVM(mod, level, fmt, ap)                                      \
+    do                                                                       \
+    {                                                                        \
+        if (NengLogCheckLeve(mod, level))                                    \
+        {                                                                    \
+            _NengLogV(mod, 0, __FILE__, __func__, __LINE__, level, fmt, ap); \
+        }                                                                    \
     } while (0)
 
-#define NENG_LOGVT(tag, level, fmt, ap)                                 \
-    do                                                                  \
-    {                                                                   \
-        NengLogV(0, tag, __FILE__, __func__, __LINE__, level, fmt, ap); \
+#define NENG_LOGVT(tag, level, fmt, ap)                                      \
+    do                                                                       \
+    {                                                                        \
+        if (NengLogCheckLeve(0, level))                                      \
+        {                                                                    \
+            _NengLogV(0, tag, __FILE__, __func__, __LINE__, level, fmt, ap); \
+        }                                                                    \
     } while (0)
 
-#define NENG_LOGVMT(mod, tag, level, fmt, ap)                             \
-    do                                                                    \
-    {                                                                     \
-        NengLogV(mod, tag, __FILE__, __func__, __LINE__, level, fmt, ap); \
+#define NENG_LOGVMT(mod, tag, level, fmt, ap)                                  \
+    do                                                                         \
+    {                                                                          \
+        if (NengLogCheckLeve(mod, level))                                      \
+        {                                                                      \
+            _NengLogV(mod, tag, __FILE__, __func__, __LINE__, level, fmt, ap); \
+        }                                                                      \
     } while (0)
 
 /**
  * @brief 输出日志，like sprintf 一般不直接调用此函数，而是使用NENG_LOGXXXX宏输出日志；
+ *  _NengLog: 不检查级别，直接输出
  *
  * @param mod 模块ID
  * @param tag 标签ID
@@ -154,31 +178,44 @@ void NengLogV(int mod, int tag, const char *file, const char *func, int line, in
  * @param level 日志级别
  * @param fmt 日志格式化字符串, 后继是可变输出函数
  */
+void _NengLog(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, ...);
 void NengLog(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, ...);
 
 // 日志输出宏
-#define NENG_LOG(level, fmt, ...)                                               \
-    do                                                                          \
-    {                                                                           \
-        NengLog(0, 0, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+#define NENG_LOG(level, fmt, ...)                                                    \
+    do                                                                               \
+    {                                                                                \
+        if (NengLogCheckLeve(0, level))                                              \
+        {                                                                            \
+            _NengLog(0, 0, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+        }                                                                            \
     } while (0)
 
-#define NENG_LOGM(mod, level, fmt, ...)                                           \
-    do                                                                            \
-    {                                                                             \
-        NengLog(mod, 0, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+#define NENG_LOGM(mod, level, fmt, ...)                                                \
+    do                                                                                 \
+    {                                                                                  \
+        if (NengLogCheckLeve(mod, level))                                              \
+        {                                                                              \
+            _NengLog(mod, 0, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+        }                                                                              \
     } while (0)
 
-#define NENG_LOGT(tag, level, fmt, ...)                                           \
-    do                                                                            \
-    {                                                                             \
-        NengLog(0, tag, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+#define NENG_LOGT(tag, level, fmt, ...)                                                \
+    do                                                                                 \
+    {                                                                                  \
+        if (NengLogCheckLeve(0, level))                                                \
+        {                                                                              \
+            _NengLog(0, tag, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+        }                                                                              \
     } while (0)
 
-#define NENG_LOGMT(mod, tag, level, fmt, ...)                                       \
-    do                                                                              \
-    {                                                                               \
-        NengLog(mod, tag, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+#define NENG_LOGMT(mod, tag, level, fmt, ...)                                            \
+    do                                                                                   \
+    {                                                                                    \
+        if (NengLogCheckLeve(mod, level))                                                \
+        {                                                                                \
+            _NengLog(mod, tag, __FILE__, __func__, __LINE__, level, fmt, ##__VA_ARGS__); \
+        }                                                                                \
     } while (0)
 
 // 含级别的日志输出宏

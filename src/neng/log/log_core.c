@@ -423,28 +423,32 @@ void NengLogClearLevel(int mod)
     _log_mod_level[mod] = 0;
 }
 
-void NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap)
+int NengLogCheckLeve(int mod, int level)
 {
-#ifdef __LINUX__
-    _install_onexit();
-#endif
-
     int mod_level = NengLogGetLevel(mod);
-    uint8_t log_flags = (uint8_t)(((uint32_t)level & 0xff00) >> 8);
-
     level = level & 0x00ff;
     if (mod_level >= 0)
     {
         if (level > mod_level)
         {
-            return;
+            return 0;
         }
     }
     else if (mod != 0 && level > NengLogGetLevel(0))
     {
-        return;
+        return 0;
     }
 
+    return 1;
+}
+
+void _NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap)
+{
+#ifdef __LINUX__
+    _install_onexit();
+#endif
+
+    uint8_t log_flags = (uint8_t)(((uint32_t)level & 0xff00) >> 8);
     int size = vsnprintf(NULL, 0, fmt, ap);
     if (size <= 0)
     {
@@ -487,6 +491,26 @@ void NengLogV(int mod, int tag, const char *file, const char *func, int line, in
 
     NengLogWrite(item);
 }
+
+void NengLogV(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, va_list ap)
+{
+    if (NengLogCheckLeve(mod, level) == 0)
+    {
+        return;
+    }
+
+    return _NengLogV(mod, tag, file, func, line, level, fmt, ap);
+}
+
+void _NengLog(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    _NengLogV(mod, tag, file, func, line, level, fmt, ap);
+    va_end(ap);
+}
+
 
 void NengLog(int mod, int tag, const char *file, const char *func, int line, int level, const char *fmt, ...)
 {

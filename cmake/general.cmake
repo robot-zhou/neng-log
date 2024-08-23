@@ -82,7 +82,6 @@ set(COMMON_COMPILE_CXX_FLAGS "${COMMON_COMPILE_FLAGS}")
 set(COMMON_COMPILE_C_FLAGS "${COMMON_COMPILE_FLAGS} -Wno-pointer-sign -Wnested-externs -Wstrict-prototypes -Wmissing-prototypes")
 
 set(CMAKE_CXX_STANDARD 14)
-# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_link_options(-Wl,-Bsymbolic -Wl,--no-undefined)
 
 # 重新定义当前目标的源文件的__FILE__宏

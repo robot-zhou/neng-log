@@ -53,6 +53,8 @@ set_target_properties(${PROJECT_NAME}-static PROPERTIES
 # TARGET: libneng-log shared
 add_library(${PROJECT_NAME}-shared SHARED ${NENG_LOG_SRC_FILES})
 redefine_file_macro(${PROJECT_NAME}-shared)
+add_custom_command(TARGET ${PROJECT_NAME}-shared POST_BUILD
+    COMMAND ${CMAKE_DIR}/neng-strip.sh $<TARGET_FILE:${PROJECT_NAME}-shared>)
 target_link_libraries(${PROJECT_NAME}-shared pthread)
 set_target_properties(${PROJECT_NAME}-shared PROPERTIES
     OUTPUT_NAME ${PROJECT_NAME}
@@ -63,26 +65,27 @@ set_target_properties(${PROJECT_NAME}-shared PROPERTIES
 # TARGET: test example
 set(TEST_EXAMPLE_SRC_DIR ${TEST_DIR}/example)
 file(GLOB_RECURSE TEST_EXAMPLE_SRC_FILES ${TEST_EXAMPLE_SRC_DIR}/*.cpp ${TEST_EXAMPLE_SRC_DIR}/*.c)
-add_executable(${PROJECT_NAME}-example ${TEST_EXAMPLE_SRC_FILES})
-redefine_file_macro(${PROJECT_NAME}-example)
-target_link_libraries(${PROJECT_NAME}-example ${PROJECT_NAME} pthread)
+add_executable(test-${PROJECT_NAME}-example ${TEST_EXAMPLE_SRC_FILES})
+redefine_file_macro(test-${PROJECT_NAME}-example)
+target_link_libraries(test-${PROJECT_NAME}-example ${PROJECT_NAME} pthread)
 
 # TARGET: test example-properties
 set(TEST_EXAMPLE_PROPERTIES_SRC_DIR ${TEST_DIR}/example-properties)
 file(GLOB_RECURSE TEST_EXAMPLE_PROPERTIES_SRC_FILES ${TEST_EXAMPLE_PROPERTIES_SRC_DIR}/*.cpp ${TEST_EXAMPLE_PROPERTIES_SRC_DIR}/*.c)
-add_executable(${PROJECT_NAME}-example-properties ${TEST_EXAMPLE_PROPERTIES_SRC_FILES})
-redefine_file_macro(${PROJECT_NAME}-example-properties)
-target_link_libraries(${PROJECT_NAME}-example-properties ${PROJECT_NAME} pthread)
+add_executable(test-${PROJECT_NAME}-example-properties ${TEST_EXAMPLE_PROPERTIES_SRC_FILES})
+redefine_file_macro(test-${PROJECT_NAME}-example-properties)
+target_link_libraries(test-${PROJECT_NAME}-example-properties ${PROJECT_NAME} pthread)
 
 # DEPENDENCY
-add_dependencies(${PROJECT_NAME}-example ${PROJECT_NAME}-static ${PROJECT_NAME}-shared)
-add_dependencies(${PROJECT_NAME}-example-properties ${PROJECT_NAME}-static ${PROJECT_NAME}-shared)
+add_dependencies(test-${PROJECT_NAME}-example ${PROJECT_NAME}-static ${PROJECT_NAME}-shared)
+add_dependencies(test-${PROJECT_NAME}-example-properties ${PROJECT_NAME}-static ${PROJECT_NAME}-shared)
 
 # CONFIGURE Files
 configure_file(${PROJECT_SOURCE_DIR}/neng-log.pc.in ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc @ONLY NEWLINE_STYLE UNIX)
 
 # INSTALL
-install(TARGETS ${PROJECT_NAME}-example ${PROJECT_NAME}-example-properties DESTINATION bin)
+install(TARGETS test-${PROJECT_NAME}-example test-${PROJECT_NAME}-example-properties DESTINATION bin)
 install(TARGETS ${PROJECT_NAME}-static ${PROJECT_NAME}-shared DESTINATION lib)
+install(FILES $<TARGET_FILE:${PROJECT_NAME}-shared>.debug DESTINATION lib)
 install(DIRECTORY ${INC_DIR}/neng DESTINATION include)
 install(FILES ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc DESTINATION lib/pkgconfig)

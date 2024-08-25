@@ -17,7 +17,7 @@ int neng_log_sys_gettid(void)
 
 #include <pthread.h>
 
-int gettid(void)
+int neng_log_sys_gettid(void)
 {
     uint64_t id = 0;
     pthread_threadid_np(NULL, &id);

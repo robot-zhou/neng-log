@@ -53,8 +53,7 @@ set_target_properties(${PROJECT_NAME}-static PROPERTIES
 # TARGET: libneng-log shared
 add_library(${PROJECT_NAME}-shared SHARED ${NENG_LOG_SRC_FILES})
 redefine_file_macro(${PROJECT_NAME}-shared)
-add_custom_command(TARGET ${PROJECT_NAME}-shared POST_BUILD
-    COMMAND ${CMAKE_DIR}/neng-strip.sh $<TARGET_FILE:${PROJECT_NAME}-shared>)
+strip_file(${PROJECT_NAME}-shared)
 target_link_libraries(${PROJECT_NAME}-shared pthread)
 set_target_properties(${PROJECT_NAME}-shared PROPERTIES
     OUTPUT_NAME ${PROJECT_NAME}
@@ -86,6 +85,9 @@ configure_file(${PROJECT_SOURCE_DIR}/neng-log.pc.in ${OUTPUT_LIB_DIR}/pkgconfig/
 # INSTALL
 install(TARGETS test-${PROJECT_NAME}-example test-${PROJECT_NAME}-example-properties DESTINATION bin)
 install(TARGETS ${PROJECT_NAME}-static ${PROJECT_NAME}-shared DESTINATION lib)
-install(FILES $<TARGET_FILE:${PROJECT_NAME}-shared>.debug DESTINATION lib)
 install(DIRECTORY ${INC_DIR}/neng DESTINATION include)
 install(FILES ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc DESTINATION lib/pkgconfig)
+
+if(OS_LINUX AND GNU)
+    install(FILES $<TARGET_FILE:${PROJECT_NAME}-shared>.debug DESTINATION lib)
+endif()

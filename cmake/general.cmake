@@ -1,7 +1,13 @@
+# cmake file path/name
+set(INC_GENERAL_CMAKE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+message("INC_GENERAL_CMAKE_PATH: ${INC_GENERAL_CMAKE_PATH}")
+
 # build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
+
+message("CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 
 # check compile type
 message("C Compiler: " ${CMAKE_C_COMPILER_ID})
@@ -77,12 +83,16 @@ else()
 endif()
 
 # compile/link options
-set(COMMON_COMPILE_FLAGS "-fPIC -fno-strict-aliasing -fno-common -Wall -Werror -Wno-unused-parameter -Wredundant-decls -Wpointer-arith -Wcast-qual -Wundef -Wno-builtin-macro-redefined")
+set(COMMON_COMPILE_FLAGS "-Wall -Werror -Wno-unused-parameter -Wredundant-decls -Wpointer-arith -Wcast-qual -Wundef -Wno-builtin-macro-redefined")
+set(COMMON_COMPILE_FLAGS "${COMMON_COMPILE_FLAGS} -fPIC -fno-strict-aliasing -fno-common")
 set(COMMON_COMPILE_CXX_FLAGS "${COMMON_COMPILE_FLAGS}")
 set(COMMON_COMPILE_C_FLAGS "${COMMON_COMPILE_FLAGS} -Wno-pointer-sign -Wnested-externs -Wstrict-prototypes -Wmissing-prototypes")
 
 set(CMAKE_CXX_STANDARD 14)
-add_link_options(-Wl,-Bsymbolic -Wl,--no-undefined)
+
+if(GNU)
+    add_link_options(-Wl,-Bsymbolic -Wl,--no-undefined)
+endif()
 
 # 重新定义当前目标的源文件的__FILE__宏
 function(redefine_file_macro targetname)
@@ -111,3 +121,10 @@ function(redefine_file_macro targetname)
         )
     endforeach()
 endfunction()
+
+function(strip_file targetname)
+    if(OS_LINUX AND GNU)
+        add_custom_command(TARGET ${targetname} COMMAND ${INC_GENERAL_CMAKE_PATH}/neng-strip.sh $<TARGET_FILE:${targetname}>)
+        set_target_properties(${targetname} PROPERTIES ADDITIONAL_CLEAN_FILES $<TARGET_FILE:${targetname}>.debug)
+    endif()
+endfunction(strip_file targetname)

@@ -32,6 +32,9 @@ set(PROJECT_SOVERSION 1.0)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_COMPILE_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_COMPILE_CXX_FLAGS}")
 
+# configure Files
+configure_file(${PROJECT_SOURCE_DIR}/neng-log.pc.in ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc @ONLY NEWLINE_STYLE UNIX)
+
 # common include directory
 include_directories(${INC_DIR})
 include_directories(${3RDPARTY_DIR})
@@ -78,9 +81,6 @@ target_link_libraries(test-${PROJECT_NAME}-example-properties ${PROJECT_NAME} pt
 # DEPENDENCY
 add_dependencies(test-${PROJECT_NAME}-example ${PROJECT_NAME}-static ${PROJECT_NAME}-shared)
 add_dependencies(test-${PROJECT_NAME}-example-properties ${PROJECT_NAME}-static ${PROJECT_NAME}-shared)
-
-# CONFIGURE Files
-configure_file(${PROJECT_SOURCE_DIR}/neng-log.pc.in ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc @ONLY NEWLINE_STYLE UNIX)
 
 # INSTALL
 install(TARGETS test-${PROJECT_NAME}-example test-${PROJECT_NAME}-example-properties DESTINATION bin)

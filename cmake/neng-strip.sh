@@ -25,4 +25,4 @@ function strip_file() {
 [ -n "$1" ] || exit 1
 test_file $1
 strip_file $1
-echo "== neng-strip file success: $1"
+echo "== neng-strip file success: $1 => $1.debug"

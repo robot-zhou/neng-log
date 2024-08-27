@@ -124,7 +124,7 @@ endfunction()
 
 function(strip_file targetname)
     if(OS_LINUX AND GNU)
-        add_custom_command(TARGET ${targetname} COMMAND ${INC_GENERAL_CMAKE_PATH}/neng-strip.sh $<TARGET_FILE:${targetname}>)
+        add_custom_command(TARGET ${targetname} COMMAND ${INC_GENERAL_CMAKE_PATH}/neng-strip.sh --file $<TARGET_FILE:${targetname}>)
         set_target_properties(${targetname} PROPERTIES ADDITIONAL_CLEAN_FILES $<TARGET_FILE:${targetname}>.debug)
     endif()
 endfunction(strip_file targetname)

@@ -1,0 +1,22 @@
+Source: libneng-log
+Priority: extra
+Maintainer: robot.zhou@qq.com
+Build-Depends: debhelper (>= 8.0.0), cmake (>= 3.0.0)
+Standards-Version: 3.9.4
+Section: development
+Description: neng-log is a log c library for linux platform.
+
+Package: libneng-log
+Architecture: any
+Depends: 
+Description: neng-log is a log c library for linux platform.
+
+Package: libneng-log-dbg
+Architecture: any
+Depends: libneng-log (=${source:Version})
+Description: neng-log is a log c library for linux platform.
+
+Package: libneng-log-dev
+Architecture: any
+Depends: libneng-log (=${source:Version})
+Description: neng-log is a log c library for linux platform.

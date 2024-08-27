@@ -1,0 +1,54 @@
+#!/usr/bin/make -f
+
+CURDIR      :=$(shell pwd -P)
+SRCDIR      = $(CURDIR)
+DEBAINDIR   = $(SRCDIR)/debian
+BUILDDIR    = $(CURDIR)/build
+
+.PHONY: clean build-indep build-arch build install binary-indep binary-arch binary
+
+clean:
+	-rm -rf $(BUILDDIR)
+	-rm -rf $(SRCDIR)/bin
+	-rm -rf $(SRCDIR)/lib
+	-rm -rf $(SRCDIR)/objs
+	-rm -rf $(DEBAINDIR)/tmp
+	dh_clean 
+
+build-indep:
+
+build-arch: build-indep
+
+build: build-arch
+	-mkdir $(BUILDDIR)
+	cmake -DCMAKE_BUILD_TYPE=RelWithDeb -DCMAKE_INSTALL_PREFIX=/neng -B $(BUILDDIR) -S $(SRCDIR)
+	cmake --build $(BUILDDIR)
+
+install: 
+	dh_testdir
+	dh_testroot
+	dh_prep
+	cd $(BUILDDIR); make install DESTDIR=$(DEBAINDIR)/tmp
+
+binary-indep: install
+
+binary-arch: binary-indep
+
+binary: binary-arch
+	dh_testdir
+	dh_testroot
+#	dh_installchangelogs ChangeLog
+#	dh_installdocs
+#	dh_installexamples
+	dh_installdirs
+	dh_install --sourcedir=debian/tmp
+	dh_installdeb
+	dh_installdebconf
+#	dh_strip --dbg-package=libneng-log-dbg
+	cmake/neng-strip.sh --dbg-package=libneng-log-dbg
+	dh_link
+	dh_compress
+	dh_fixperms
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb

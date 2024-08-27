@@ -1,0 +1,4 @@
+/neng/include/neng/log/*
+/neng/lib/*.a
+/neng/lib/*.so
+/neng/lib/pkgconfig/*.pc

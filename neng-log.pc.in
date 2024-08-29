@@ -10,6 +10,6 @@ Version: @PKGCFG_VERSION@
 URL: @PKGCFG_HOMEPAGE_URL@
 Requires: 
 Conflicts: 
-Libs: -L${libdir} -lneng-log
+Libs: -L${libdir} -l@PKGCFG_LIBNAME@
 Libs.private: -lpthread
 Cflags: -I${includedir}

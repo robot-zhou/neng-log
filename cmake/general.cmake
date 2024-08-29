@@ -85,6 +85,7 @@ endif()
 # compile/link options
 set(COMMON_COMPILE_FLAGS "-Wall -Werror -Wno-unused-parameter -Wredundant-decls -Wpointer-arith -Wcast-qual -Wundef -Wno-builtin-macro-redefined")
 set(COMMON_COMPILE_FLAGS "${COMMON_COMPILE_FLAGS} -fPIC -fno-strict-aliasing -fno-common")
+set(COMMON_ASM_FLAGS "${COMMON_COMPILE_FLAGS} -x assembler-with-cpp")
 set(COMMON_COMPILE_CXX_FLAGS "${COMMON_COMPILE_FLAGS}")
 set(COMMON_COMPILE_C_FLAGS "${COMMON_COMPILE_FLAGS} -Wno-pointer-sign -Wnested-externs -Wstrict-prototypes -Wmissing-prototypes")
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(neng-log VERSION 1.0.0
+project(neng-log VERSION 1.0.2
     DESCRIPTION "neng log library"
     HOMEPAGE_URL "https://gitee.com/robot-zhou/neng-log")
 

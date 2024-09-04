@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
     // 新建syslog日志appender
-    NengLogSyslogAppender *sys_appender = NengLogCreateSyslogAppender(NULL, LOG_ODELAY | LOG_PID, LOG_LOCAL0);
+    NengLogSyslogAppender *sys_appender = NengLogCreateSyslogAppender(NULL, LOG_ODELAY | LOG_PID, LOG_LOCAL0, 1);
 
     // 设定系统日志输出选项，
     sys_appender->appender.flags.enable_tid = 1;
@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
     NENG_LOG_DEBUG("this is test debug log");
     NENG_LOGMT_NOTICE(20, 30, "this is mod-20 tag-30 notice log.");
     NENG_LOGMT_ERROR(20, 35, "this is mod-20 tag-35 error log.");
+    NENG_LOGMT(10, 20, kNengLogNotice|LOG_LOCAL7, "this is mod-10 tag-20 local7 log");
 
     return 0;
 }

@@ -154,6 +154,8 @@ static const char *_LevelNames[] = {
 
 const char *NengLogLevel2Name(int level)
 {
+    level = level & NENG_LOG_LEVELMASK;
+    
     if (level >= kNengLogMinLevel && level <= kNengLogMaxLevel)
     {
         return _LevelNames[level];

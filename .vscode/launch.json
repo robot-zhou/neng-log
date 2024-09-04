@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) launch example",
+            "name": "(gdb) launch test-example",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/objs/bin/example",
+            "program": "${workspaceFolder}/bin/test-neng-log-example",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -29,10 +29,10 @@
             ]
         },
         {
-            "name": "(gdb) launch example-properties",
+            "name": "(gdb) launch test-example-properties",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/objs/bin/example-properties",
+            "program": "${workspaceFolder}/bin/test-neng-log-example-properties",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

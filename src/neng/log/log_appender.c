@@ -249,7 +249,7 @@ int NengLogAppenderHitLogItem(NengLogAppender *appender, NengLogItem *item)
     {
         NengLogFilter *filter = &(filter_item->filter);
 
-        if (NengLogFilterHit(filter, item->mod, item->tag, item->level) == 1)
+        if (NengLogFilterHit(filter, item->mod, item->tag, item->level & NENG_LOG_LEVELMASK) == 1)
         {
             return 1;
         }

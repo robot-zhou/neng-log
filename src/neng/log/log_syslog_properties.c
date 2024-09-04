@@ -108,7 +108,10 @@ NengLogAppender *NengLogLoadSyslogProperties(const char *prefix, NengLogProperti
     snprintf(name, sizeof(name), "%s.facility", prefix);
     int facility = _string2facility(_neng_log_properties_get(handler, name));
 
-    NengLogSyslogAppender *sys_appender = NengLogCreateSyslogAppender(ident, option, facility);
+    snprintf(name, sizeof(name), "%s.override_facility", prefix);
+    int override_facility = _neng_log_properties_get_defbool(handler, name, 0);
+
+    NengLogSyslogAppender *sys_appender = NengLogCreateSyslogAppender(ident, option, facility, override_facility);
     if (sys_appender == NULL)
     {
         return NULL;

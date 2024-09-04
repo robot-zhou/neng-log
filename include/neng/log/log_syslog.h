@@ -29,6 +29,7 @@ typedef struct stNengLogSyslogAppender
     char ident[64];           // 系统日志ident， 请看syslog.h定义
     int option;               // 系统日志options， 请看syslog.h定义
     int facility;             // 系统日志facility， 请看syslog.h定义
+    int override_facility;    // facility 字段是否覆盖当前日志的facility
 } NengLogSyslogAppender;
 
 /**
@@ -37,9 +38,10 @@ typedef struct stNengLogSyslogAppender
  * @param ident     同opensys函数定义
  * @param option    同opensys函数定义
  * @param facility  同opensys函数定义
+ * @param override_facility 第三个参数facility，是否覆盖当前日志的Facility
  * @return NengLogSyslogAppender* 成功返回非NULL，失败返回NULL
  */
-NengLogSyslogAppender *NengLogCreateSyslogAppender(const char *ident, int option, int facility);
+NengLogSyslogAppender *NengLogCreateSyslogAppender(const char *ident, int option, int facility, int override_facility);
 
 //
 //

@@ -2,3 +2,5 @@
 /bin
 /lib
 /objs
+
+/include/neng/log/log_version.h

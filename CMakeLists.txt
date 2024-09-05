@@ -33,6 +33,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_COMPILE_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_COMPILE_CXX_FLAGS}")
 
 # configure Files
+configure_file(${PROJECT_SOURCE_DIR}/include/neng/log/log_version.h.in ${PROJECT_SOURCE_DIR}/include/neng/log/log_version.h @ONLY NEWLINE_STYLE UNIX)
 configure_file(${PROJECT_SOURCE_DIR}/neng-log.pc.in ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc @ONLY NEWLINE_STYLE UNIX)
 
 # common include directory
@@ -84,5 +85,5 @@ add_dependencies(test-${PROJECT_NAME}-example-properties ${PROJECT_NAME}-static 
 # INSTALL
 install(TARGETS test-${PROJECT_NAME}-example test-${PROJECT_NAME}-example-properties DESTINATION bin)
 install(TARGETS ${PROJECT_NAME}-static ${PROJECT_NAME}-shared DESTINATION lib)
-install(DIRECTORY ${INC_DIR}/neng DESTINATION include)
+install(DIRECTORY ${INC_DIR}/neng DESTINATION include PATTERN *.h.in EXCLUDE)
 install(FILES ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc DESTINATION lib/pkgconfig)

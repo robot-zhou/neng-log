@@ -57,6 +57,7 @@ set_target_properties(${PROJECT_NAME}-static PROPERTIES
 # TARGET: libneng-log shared
 add_library(${PROJECT_NAME}-shared SHARED ${NENG_LOG_SRC_FILES})
 redefine_file_macro(${PROJECT_NAME}-shared)
+target_link_options(${PROJECT_NAME}-shared PUBLIC -Wl,--version-script=${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.map)
 target_link_libraries(${PROJECT_NAME}-shared pthread)
 set_target_properties(${PROJECT_NAME}-shared PROPERTIES
     OUTPUT_NAME ${PROJECT_NAME}

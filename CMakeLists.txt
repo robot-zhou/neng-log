@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(neng-log VERSION 1.0.0
+project(neng-log VERSION 1.0.2
     DESCRIPTION "neng log library"
     HOMEPAGE_URL "https://gitee.com/robot-zhou/neng-log")
 
@@ -33,6 +33,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_COMPILE_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_COMPILE_CXX_FLAGS}")
 
 # configure Files
+configure_file(${PROJECT_SOURCE_DIR}/include/neng/log/log_version.h.in ${PROJECT_SOURCE_DIR}/include/neng/log/log_version.h @ONLY NEWLINE_STYLE UNIX)
 configure_file(${PROJECT_SOURCE_DIR}/neng-log.pc.in ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc @ONLY NEWLINE_STYLE UNIX)
 
 # common include directory
@@ -56,6 +57,7 @@ set_target_properties(${PROJECT_NAME}-static PROPERTIES
 # TARGET: libneng-log shared
 add_library(${PROJECT_NAME}-shared SHARED ${NENG_LOG_SRC_FILES})
 redefine_file_macro(${PROJECT_NAME}-shared)
+target_link_options(${PROJECT_NAME}-shared PUBLIC -Wl,--version-script=${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.map)
 target_link_libraries(${PROJECT_NAME}-shared pthread)
 set_target_properties(${PROJECT_NAME}-shared PROPERTIES
     OUTPUT_NAME ${PROJECT_NAME}
@@ -84,5 +86,5 @@ add_dependencies(test-${PROJECT_NAME}-example-properties ${PROJECT_NAME}-static 
 # INSTALL
 install(TARGETS test-${PROJECT_NAME}-example test-${PROJECT_NAME}-example-properties DESTINATION bin)
 install(TARGETS ${PROJECT_NAME}-static ${PROJECT_NAME}-shared DESTINATION lib)
-install(DIRECTORY ${INC_DIR}/neng DESTINATION include)
+install(DIRECTORY ${INC_DIR}/neng DESTINATION include PATTERN *.h.in EXCLUDE)
 install(FILES ${OUTPUT_LIB_DIR}/pkgconfig/neng-log.pc DESTINATION lib/pkgconfig)

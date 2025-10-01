@@ -426,7 +426,7 @@ void NengLogClearLevel(int mod)
 int NengLogCheckLeve(int mod, int level)
 {
     int mod_level = NengLogGetLevel(mod);
-    level = level & 0x00ff;
+    level = level & NENG_LOG_LEVELMASK;
     if (mod_level >= 0)
     {
         if (level > mod_level)
@@ -448,7 +448,7 @@ void _NengLogV(int mod, int tag, const char *file, const char *func, int line, i
     _install_onexit();
 #endif
 
-    uint8_t log_flags = (uint8_t)(((uint32_t)level & 0xff00) >> 8);
+    uint8_t log_flags = (uint8_t)(((uint32_t)level & NENG_LOG_FLAGMASK) >> NENG_LOG_FLAGOFFSET);
     int size = vsnprintf(NULL, 0, fmt, ap);
     if (size <= 0)
     {

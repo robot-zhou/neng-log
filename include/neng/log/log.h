@@ -45,6 +45,22 @@ enum
 };
 
 /**
+ * @brief 日志level字段掩码定义
+ *
+ */
+#define NENG_LOG_LEVELMASK 0x0007    /* 日志级别, bit: 0-2*/
+#define NENG_LOG_FACOFFSET 3         /* 日志Facility字段，移动bit位数 */
+#define NENG_LOG_FACMASK 0x03f8      /* 日志Facility定义，与syslog保持兼容，bit: 3-9*/
+#define NENG_LOG_FLAGMASK 0x00ff0000 /* 日志扩展标记, 高16bit */
+#define NENG_LOG_FLAGOFFSET 16       /* 日志扩展标记，移动bit位数 */
+
+/**
+ * @brief 日志输出强制标志，用法: 与级别位或运算, 如：level | NENG_LOG_FLAG_SYNC
+ *
+ */
+#define NENG_LOG_FLAG_SYNC (0x01 << NENG_LOG_FLAGOFFSET)
+
+/**
  * @brief 启用/禁用异步模式
  *
  * @param enable, 1: 启用，0: 禁用
@@ -97,12 +113,6 @@ const char *NengLogLevel2Name(int level);
  * @return int 返回日志级别，-1，name是无效的日志级别名称
  */
 int NengLogName2Level(const char *name);
-
-/**
- * @brief 日志输出强制标志，用法: 与级别位或运算, 如：level | NENG_LOG_FLAG_SYNC
- *
- */
-#define NENG_LOG_FLAG_SYNC (0x01 << 8)
 
 /**
  * @brief 检查日志级别

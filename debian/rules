@@ -1,18 +1,19 @@
 #!/usr/bin/make -f
 
 CURDIR      :=$(shell pwd -P)
-SRCDIR      = $(CURDIR)
-DEBAINDIR   = $(SRCDIR)/debian
+PROJDIR     = $(CURDIR)
+DEBAINDIR   = $(PROJDIR)/debian
 BUILDDIR    = $(CURDIR)/build
 
 .PHONY: clean build-indep build-arch build install binary-indep binary-arch binary
 
 clean:
 	-rm -rf $(BUILDDIR)
-	-rm -rf $(SRCDIR)/bin
-	-rm -rf $(SRCDIR)/lib
-	-rm -rf $(SRCDIR)/objs
+	-rm -rf $(PROJDIR)/bin
+	-rm -rf $(PROJDIR)/lib
+	-rm -rf $(PROJDIR)/objs
 	-rm -rf $(DEBAINDIR)/tmp
+	-rm -rf $(PROJDIR)/include/neng/log/log_version.h
 	dh_clean 
 
 build-indep:
@@ -21,7 +22,7 @@ build-arch: build-indep
 
 build: build-arch
 	-mkdir $(BUILDDIR)
-	cmake -DCMAKE_BUILD_TYPE=RelWithDeb -DCMAKE_INSTALL_PREFIX=/neng -B $(BUILDDIR) -S $(SRCDIR)
+	cmake -DCMAKE_BUILD_TYPE=RelWithDeb -DCMAKE_INSTALL_PREFIX=/neng -B $(BUILDDIR) -S $(PROJDIR)
 	cmake --build $(BUILDDIR)
 
 install: 

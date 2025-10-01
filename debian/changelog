@@ -1,6 +1,6 @@
-libneng-log (1.0.1) stable; urgency=normal
+libneng-log (1.0.2) stable; urgency=normal
 
-  *  neng-log库第一个版本
+  *  neng-log 优化： 兼容支持syslog facility
 
  --  <robot.zhou@qq.com>  Mon, 26 Aug 2024 17:50:38 +0800
     

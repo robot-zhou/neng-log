@@ -104,13 +104,15 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
     }
     buf[header_len] = '\0';
 
-    if (TAILQ_FIRST(&(sys_appender_ex->filter_list)) == NULL)
+    int pri = item->level & LOG_PRIMASK;
+    int facility = item->level & LOG_FACMASK;
+
+    if (facility != 0 && sys_appender->override_facility == 0)
     {
         __syslog_write(item->level, "%s%s", buf, item->content);
         return;
     }
 
-    int pri = item->level;
     int hit_filter = 0;
     NengLogSyslogFilterItem *filter_item = NULL;
 
@@ -119,7 +121,7 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
         NengLogSyslogFilter *sys_filter = &(filter_item->sys_filter);
         NengLogFilter *filter = &(sys_filter->filter);
 
-        if (sys_filter->facility != 0 && NengLogFilterHit(filter, item->mod, item->tag, item->level) == 1)
+        if (sys_filter->facility != 0 && NengLogFilterHit(filter, item->mod, item->tag, pri) == 1)
         {
             int loc_pri = pri | (sys_filter->facility & LOG_FACMASK);
             __syslog_write(loc_pri, "%s%s", buf, item->content);
@@ -129,7 +131,15 @@ static void NengLogSyslogWrite(struct stNengLogAppender *appender, const NengLog
 
     if (hit_filter == 0)
     {
-        pri |= sys_appender->facility & LOG_FACMASK;
+        if (sys_appender->facility != 0)
+        {
+            pri |= sys_appender->facility & LOG_FACMASK;
+        }
+        else 
+        {
+            pri |= facility;
+        }
+        
         __syslog_write(pri, "%s%s", buf, item->content);
     }
 }
@@ -149,7 +159,7 @@ static void NengLogSyslogRelease(struct stNengLogAppender *appender)
     free(sys_appender);
 }
 
-NengLogSyslogAppender *NengLogCreateSyslogAppender(const char *ident, int option, int facility)
+NengLogSyslogAppender *NengLogCreateSyslogAppender(const char *ident, int option, int facility, int override_facility)
 {
     NengLogSyslogAppender *sys_appender = (NengLogSyslogAppender *)calloc(1, sizeof(NengLogSyslogAppender) + sizeof(NengLogSyslogAppenderEx) + sizeof(NengLogSyslogContext));
 
@@ -179,6 +189,7 @@ NengLogSyslogAppender *NengLogCreateSyslogAppender(const char *ident, int option
     }
 
     sys_appender->facility = facility;
+    sys_appender->override_facility = override_facility;
 
     NengLogSyslogAppenderEx *sys_appender_ex = __SYSLOG_APPENDER_EX(sys_appender);
 
